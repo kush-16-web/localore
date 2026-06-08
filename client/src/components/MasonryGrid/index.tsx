@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-interface GemCardData {
+export interface GemCardData {
   id: number;
   title: string;
   category: string;
@@ -16,7 +16,7 @@ interface GemCardData {
   aspectRatio: string;
 }
 
-const initialGems: GemCardData[] = [
+export const initialGems: GemCardData[] = [
   {
     id: 1,
     title: "Rander Kulfi & Coco Corner",
