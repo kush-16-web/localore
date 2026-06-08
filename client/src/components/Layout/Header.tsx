@@ -3,10 +3,7 @@
 import { useState } from "react";
 import logo from "../../assets/logo.png"
 
-const categories = ["All", "Viewpoint", "Nature", "Street food", "Heritage", "Quiet spots"];
-
 export default function Header() {
-  const [activeTab, setActiveTab] = useState("All");
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (

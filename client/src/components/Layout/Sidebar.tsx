@@ -1,8 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Explore from "../../assets/Explore.png"
-import Save from "../../assets/bookmark.gif"
-import Gem from "../../assets/Gem.gif"
 
 type NavItem = {
   label: string;
@@ -16,11 +13,7 @@ type AreaItem = {
   href: string;
 };
 
-  const browseItems: NavItem[] = [
-  { label: "Explore",     icon: Explore,  href: "/" },
-  { label: "Saved Gems",  icon: Save, href: "/saved-gems" },
-  { label: "My Gems",     icon: Gem, href: "/my-gems" },
-];
+
 
 const nearbyAreas: AreaItem[] = [
   { label: "Rander",   color: "#E8743A", href: "#" },
@@ -35,6 +28,11 @@ export default function Sidebar() {
   const [active, setActive] = useState("Explore");
   const [activeArea, setActiveArea] = useState("");
 
+    const browseItems: NavItem[] = [
+  { label: "Explore",     icon: "ti ti-compass",  href: "/" },
+  { label: "Saved Gems",  icon:"ti ti-bookmark" , href: "/saved-gems" },
+  { label: "My Gems",     icon:"ti ti-diamond", href: "/my-gems" },
+];
 
   return (
     <>
@@ -73,20 +71,25 @@ export default function Sidebar() {
                       no-underline group
                       ${
                         isActive
-                          ? "bg-[#261A14] text-[#F5E6D0]"
+                          ? "bg-[#af6844d0] text-[#F5E6D0]"
                           : "text-[#A07050] hover:bg-[#1C1410] hover:text-[#C8A888]"
                       }
                     `}
                   >
-                    <img
-                      src={item.icon}
-                      alt={item.label}
-                      className="w-8 h-8 shrink-0 transition-colors duration-150 border-[#E8743A] rounded-[10px] p-[1px]"
+                    <i
+                      className={`
+                        ${item.icon}
+                        ${item.label === "Explore" && active === "Explore" ? "ti-compass-filled" : ""}
+                        ${item.label === "Saved Gems" && active === "Saved Gems" ? "ti-bookmark-filled" : ""}
+                        ${item.label === "My Gems" && active === "My Gems" ? "ti-diamond-filled" : ""}
+                        text-[20px] shrink-0 transition-colors duration-150
+                      `}
                     />
+  
                     {item.label}
                     {/* active indicator dot */}
                     {isActive && (
-                      <span className="ml-auto w-[5px] h-[5px] rounded-full bg-[#E8743A] shrink-0" />
+                      <span className="ml-auto w-[5px] h-[5px] rounded-full bg-[#1d1a18] shrink-0" />
                     )}
                   </Link>
                 </li>
