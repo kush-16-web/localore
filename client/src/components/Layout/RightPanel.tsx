@@ -10,12 +10,25 @@ type RightPanelProps = {
 export default function RightPanel({ gem, onClose, isOpen }: RightPanelProps) {
   return (
     <aside
-      className={`
-        h-full bg-[#1C1410] border-l border-[#332010] flex-shrink-0
+      className={`relative
+        h-full  border-l border-[#332010] flex-shrink-0
         transition-all duration-300 ease-in-out overflow-hidden
         ${isOpen ? 'w-[300px]' : 'w-0'}
       `}
     >
+
+       {/* Blurred Background */}
+  {gem && (
+    <div
+  className="absolute inset-0 bg-cover bg-center opacity-15"
+  style={{ backgroundImage: `url(${gem.image})` }}
+/>
+
+  )}
+
+    {/* Dark overlay */}
+  <div className="absolute z-[-1] inset-0 bg-[#120B08]/20 backdrop-blur-md" />
+
       {/* Inner wrapper keeps content from reflowing during animation */}
       <div className="w-[300px] h-full flex flex-col">
         {/* Header */}

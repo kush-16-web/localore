@@ -54,12 +54,12 @@ export default function GemCard({ gem, onClick }: Props) {
       {/* ── Body (title, description, actions) ── */}
       <div className="p-4 flex flex-col gap-2">
         {/* Title */}
-        <h3 className="text-[16px] font-semibold text-[#F5E6D0] group-hover:text-[#E8743A] transition-colors duration-200 font-['Syne',sans-serif]">
+        <h3 className="text-[16px] text-left font-semibold text-[#F5E6D0] group-hover:text-[#E8743A] transition-colors duration-200 font-['Syne',sans-serif]">
           {gem.title}
         </h3>
 
         {/* Optional description (you can hide on very small cards) */}
-        <p className="text-[12px] text-[#A07050]/90 line-clamp-2">
+        <p className="text-[12px] text-left text-[#A07050]/90 line-clamp-2">
           {gem.description}
         </p>
 
