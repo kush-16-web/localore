@@ -41,7 +41,7 @@ export default function Explore() {
       <ExploreHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Scrollable grid */}
-      <div className="flex-1 overflow-y-auto scrollbar-none">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#3D2A18] scrollbar-track-[#120B08]">
         <MasonryGrid
           gems={filteredGems}
           onGemSelect={openPanel}

@@ -7,16 +7,16 @@ type ExploreHeaderProps = {
 
 export default function ExploreHeader({ activeTab, onTabChange }: ExploreHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3 border-b border-[#332010] bg-[#0D0906]/80 backdrop-blur-lg shrink-0">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3 border-b border-[#332010] backdrop-blur-lg shrink-0">
       {/* Title + subtitle */}
-      <div>
+      <div className="flex flex-col items-start">
         <h2
           className="text-2xl font-semibold text-[#F5E6D0] tracking-wide"
           style={{ fontFamily: "'Syne', sans-serif" }}
         >
           Explore Local Gems
         </h2>
-        <p className="text-xs text-[#A07050] mt-1">
+        <p className="text-xs text-left text-[#A07050] mt-1">
           Discover hidden spots curated by locals, from quiet nature walks to legendary street food stalls.
         </p>
       </div>

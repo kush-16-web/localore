@@ -14,97 +14,179 @@ export default function GemCard({ gem, onClick }: Props) {
 
 
       return (
-    <div
-      className="group cursor-pointer rounded-2xl overflow-hidden border border-[#96683d] hover:border-[#E8743A]/40 transition-all duration-300"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={() => onClick?.(gem)}
-    >
+     <div className="flex flex-col">
 
-      {/* ── Image container ── */}
-      <div className="relative aspect-[4/3] bg-[#110C08]">
-        {/* real image */}
-        <img
-          src={gem.image}
-          alt={gem.title}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+  {/* Hero */}
+  <div className="relative h-64 flex flex-col justify-center items-center ">
+    <img
+      src={gem.image}
+      alt={gem.title}
+      className="w-full h-full object-cover sticky top-0 z-0"
+    />
 
-        {/* ── Category badge (always visible) ── */}
-        <span className="absolute top-3 left-3 bg-[#110C08]/40 backdrop-blur-md text-[#F5E6D0] text-[10px] font-medium px-2.5 py-[4px] rounded-lg border border-[#3D2A18] z-20">
-          {gem.category}
-        </span>
+    {/* Gradient */}
+    <div className="absolute inset-0 bg-gradient-to-t from-[#120B08] via-[#120B08]/30 to-transparent" />
 
-        {/* ── Area badge (always visible) ── */}
-        <span className="absolute top-3 right-3 bg-[#E8743A] text-[#110C08] text-[10px] font-bold px-2.5 py-[4px] rounded-lg flex items-center gap-1.5 z-20">
-          <i className="ti ti-map-pin text-[11px]" />
-          {gem.area}
-        </span>
-
-        {/* ── Dark overlay on hover (optional) ── */}
-        <div
-          className={`
-            absolute inset-0 transition-opacity duration-300
-            ${isHover ? "bg-black/40 opacity-100" : "opacity-0"}
-          `}
-        />
-      </div>
-
-      {/* ── Body (title, description, actions) ── */}
-      <div className="p-4 flex flex-col gap-2">
-        {/* Title */}
-        <h3 className="text-[16px] text-left font-semibold text-[#F5E6D0] group-hover:text-[#E8743A] transition-colors duration-200 font-['Syne',sans-serif]">
-          {gem.title}
-        </h3>
-
-        {/* Optional description (you can hide on very small cards) */}
-        <p className="text-[12px] text-left text-[#A07050]/90 line-clamp-2">
-          {gem.description}
-        </p>
-
-        {/* Action bar – up‑vote & bookmark */}
-        <div className="flex items-center gap-2 mt-2">
-          {/* Up‑vote button */}
-          <button
-            className={`
-              flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-semibold
-              ${gem.isUpvoted
-                ? "bg-[#E8743A]/15 text-[#E8743A] border-[#E8743A]/30"
-                : "bg-[#110C08] text-[#A07050] border-[#3D2A18] hover:text-[#F5E6D0] hover:border-[#A07050]/40"}
-            `}
-            // onClick handler would toggle up‑vote (state lives in parent)
-          >
-            <i className={`ti ${gem.isUpvoted ? "ti-arrow-big-up-filled" : "ti-arrow-big-up"}`} />
-            <span>{gem.upvotes}</span>
-          </button>
-
-          {/* Bookmark button */}
-          <button
-            className={`
-              w-7 h-7 flex items-center justify-center rounded-lg border text-[13px]
-              ${gem.isBookmarked
-                ? "bg-[#261A14] text-[#E8743A] border-[#E8743A]/30"
-                : "bg-[#110C08] text-[#A07050] border-[#3D2A18] hover:text-[#F5E6D0] hover:border-[#A07050]/40"}
-            `}
-          >
-            <i className={`ti ${gem.isBookmarked ? "ti-bookmark-filled" : "ti-bookmark"}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* ── Background colour overlay (behind the body) ── */}
-      {/* Show once the colour is ready – use the CSS string from the hook */}
-      {bgOverlay && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: bgOverlay,          // rgba(r,g,b,0.6)
-            backdropFilter: "blur(20px)",
-          }}
-        />
-      )}
+    {/* Top badges */}
+    <div className="absolute top-4 left-4 flex gap-2">
+      <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-xs text-white">
+        {gem.category}
+      </span>
     </div>
+
+    <div className="absolute top-4 right-4">
+      <span className="px-3 py-1 rounded-full bg-[#E8743A] text-[#120B08] text-xs font-semibold flex items-center gap-1">
+        <i className="ti ti-map-pin" />
+        {gem.area}
+      </span>
+    </div>
+
+    {/* Bottom Title */}
+    <div className="absolute">
+      <p className="text-white text-3xl font-['Syne']">
+        {gem.title}
+      </p>
+    </div>
+  </div>
+
+
+  {/* Content */}
+  <div className="p-5 flex flex-col gap-5">
+
+    {/* Stats */}
+    <div className="flex items-center justify-between">
+
+      <button className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-xl bg-[#1B120D] border border-[#3D2A18]">
+        <i className="ti ti-arrow-big-up text-[#E8743A]" />
+        <span className="text-[#F5E6D0]">{gem.upvotes}</span>
+      </button>
+
+      <button className="w-11 h-11 rounded-xl cursor-pointer bg-[#1B120D] border border-[#3D2A18]">
+        <i className={`ti ${gem.isBookmarked ? "ti-bookmark-filled text-[#E8743A]" : "ti-bookmark text-[#F5E6D0]"}`} />
+      </button>
+
+    </div>
+
+
+    {/* About */}
+    <div className="rounded-lg bg-[#1A120D]/60 border border-[#3D2A18] p-4">
+
+      <h3 className="text-sm text-left font-semibold text-[#F5E6D0] mb-3">
+        About this Gem
+      </h3>
+
+      <p className="text-sm text-left text-[#B88A66] leading-7">
+        {gem.description}
+      </p>
+
+    </div>
+
+
+    {/* Info Grid */}
+
+    <div className="grid grid-cols-2 gap-3">
+
+      <div className="rounded-xl flex flex-col justify-center items-center  border border-[#3D2A18] bg-[#1A120D]/60 p-2">
+
+        <div className="text-[#8B654A] text-xs mb-1">
+          Best Time
+        </div>
+
+        <div className="text-[#F5E6D0] text-xs font-medium flex items-center gap-2">
+          <i className="ti ti-clock" />
+          {gem.hours}
+        </div>
+
+      </div>
+
+
+      <div className="rounded-xl flex flex-col justify-center items-center  border border-[#3D2A18] bg-[#1A120D]/60">
+
+        <div className="text-[#8B654A] text-xs mb-1">
+          Area
+        </div>
+
+        <div className="text-[#F5E6D0] text-xs font-medium flex items-center gap-2">
+          <i className="ti ti-map-pin" />
+          {gem.area}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    {/* Author */}
+
+    <div className="rounded-2xl border border-[#3D2A18] bg-[#1A120D]/60 p-4">
+
+      <div className="text-xs text-[#8B654A] mb-3">
+        Submitted by
+      </div>
+
+      <div className="flex items-center gap-3">
+
+        <div className="w-11 h-11 rounded-full bg-[#E8743A] flex items-center justify-center font-semibold text-[#120B08]">
+          KD
+        </div>
+
+        <div>
+
+          <div className="text-[#F5E6D0]">
+            Karan Dave
+          </div>
+
+          <div className="text-xs text-[#8B654A]">
+            Local Explorer
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    {/* Tags */}
+
+    <div>
+
+      <div className="text-sm text-[#8B654A] font-bold mb-2 flex items-center">
+        <i className="ti ti-hash"></i> Tags 
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+
+        <span className="px-3 py-1 rounded-full bg-[#261A14] text-[#D9A27B] text-xs">
+          #StreetFood
+        </span>
+
+        <span className="px-3 py-1 rounded-full bg-[#261A14] text-[#D9A27B] text-xs">
+          #Dessert
+        </span>
+
+        <span className="px-3 py-1 rounded-full bg-[#261A14] text-[#D9A27B] text-xs">
+          #LocalFavorite
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  {/* Sticky Bottom */}
+
+  <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#120B08] to-transparent">
+
+    <button className="w-full rounded-xl bg-[#E8743A] cursor-pointer  text-[#120B08] font-semibold py-3 hover:opacity-90 transition">
+      Open in Maps <i className="ti ti-map"></i>
+    </button>
+
+  </div>
+
+</div>
   )
 }
 

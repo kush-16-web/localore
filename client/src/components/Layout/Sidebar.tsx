@@ -67,7 +67,7 @@ export default function Sidebar() {
                     }}
                     className={`
                       flex items-center gap-[10px] px-3 py-[7px] rounded-[10px]
-                      text-[12px] font-medium transition-all duration-150
+                      text-[12px] font-medium transition-all duration-300
                       no-underline group
                       ${
                         isActive
@@ -89,7 +89,7 @@ export default function Sidebar() {
                     {item.label}
                     {/* active indicator dot */}
                     {isActive && (
-                      <span className="ml-auto w-[5px] h-[5px] rounded-full bg-[#1d1a18] shrink-0" />
+                      <span className="ml-auto w-[5px] h-[5px] rounded-full bg-[#F5E6D0] shrink-0" />
                     )}
                   </Link>
                 </li>
