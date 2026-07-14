@@ -180,7 +180,7 @@ export default function MasonryGrid({ gems, onGemSelect, onBookmarkToggle, onUpv
 
       {/* ── Masonry Grid Layout ── */}
       {gems.length === 0 ? (
-        <div className="w-full flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#3D2A18] rounded-2xl bg-[#110C08]">
+        <div className="w-full flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#3D2A18] rounded-2xl bg-[#110C08] ">
           <i className="ti ti-search text-3xl text-[#6B4830] mb-2" />
           <p className="text-sm text-[#A07050]">No gems found in this category.</p>
         </div>

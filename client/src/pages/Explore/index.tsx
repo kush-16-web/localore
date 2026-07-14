@@ -36,12 +36,12 @@ export default function Explore() {
       : gems.filter(g => g.category.toLowerCase() === activeTab.toLowerCase());
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden ">
       {/* Sticky filter header */}
       <ExploreHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Scrollable grid */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-none">
         <MasonryGrid
           gems={filteredGems}
           onGemSelect={openPanel}
