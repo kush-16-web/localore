@@ -21,7 +21,7 @@ export function useColorThief(imgSrc: string) {
     img.src = imgSrc
     img.onload = () => {
       try {
-        const thief = new (ColorThief as any)()
+        const thief = new (ColorThief as any).default()
         // `getColor` returns [r,g,b]
         const color = thief.getColor(img) as number[]
         setRgb(color)

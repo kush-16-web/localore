@@ -8,12 +8,10 @@ type Props = {
 }
 
 export default function GemCard({ gem, onClick }: Props) {
-    const { css: bgOverlay, loading: colourLoading } = useColorThief(gem.image)
+    const { css: bgOverlay } = useColorThief(gem.image)
     const [isHover, setHover] = useState(false)
 
-    const handleClick = () => {
-        if (onClick) onClick(gem)
-    }
+
 
       return (
     <div

@@ -1,4 +1,6 @@
-import { useState } from "react";
+// MasonryGrid Component — pure grid renderer, no header or filter logic
+import React from "react";
+
 
 export interface GemCardData {
   id: number;
@@ -154,89 +156,37 @@ export const initialGems: GemCardData[] = [
   }
 ];
 
-const categories = ["All", "Viewpoint", "Nature", "Street food", "Heritage", "Quiet spots"];
+type MasonryGridProps = {
+  gems: GemCardData[];
+  onGemSelect?: (gem: GemCardData) => void;
+  onBookmarkToggle?: (id: number) => void;
+  onUpvoteToggle?: (id: number) => void;
+};
 
-export default function MasonryGrid() {
-  const [gems, setGems] = useState<GemCardData[]>(initialGems);
-  const [activeTab, setActiveTab] = useState("All");
+export default function MasonryGrid({ gems, onGemSelect, onBookmarkToggle, onUpvoteToggle }: MasonryGridProps) {
 
-  const toggleBookmark = (id: number, e: React.MouseEvent) => {
+  const handleBookmark = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setGems(prev => prev.map(gem => {
-      if (gem.id === id) {
-        return { ...gem, isBookmarked: !gem.isBookmarked };
-      }
-      return gem;
-    }));
+    onBookmarkToggle?.(id);
   };
 
-  const toggleUpvote = (id: number, e: React.MouseEvent) => {
+  const handleUpvote = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setGems(prev => prev.map(gem => {
-      if (gem.id === id) {
-        const isUpvoted = !gem.isUpvoted;
-        return {
-          ...gem,
-          isUpvoted,
-          upvotes: isUpvoted ? gem.upvotes + 1 : gem.upvotes - 1
-        };
-      }
-      return gem;
-    }));
+    onUpvoteToggle?.(id);
   };
-
-  const filteredGems = activeTab === "All" 
-    ? gems 
-    : gems.filter(gem => gem.category.toLowerCase() === activeTab.toLowerCase());
 
   return (
-    <div className="w-full flex flex-col gap-6 font-['DM_Sans',sans-serif] text-left">
-      {/* ── Heading & Filter Bar ── */}
-      <div className="flex flex-col sticky top-0 z-10 bg-[#0D0906]/80 backdrop-blur-lg md:flex-row md:items-center justify-between gap-4 px-2 py-2 transition-all duration-300 border-b border-[#332010]">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#F5E6D0] tracking-wide" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Explore Local Gems
-          </h2>
-          <p className="text-xs text-[#A07050] mt-1">
-            Discover hidden spots curated by locals, from quiet nature walks to legendary street food stalls.
-          </p>
-        </div>
-
-        {/* Categories Tab Bar */}
-        <div className="flex items-center gap-[6px] overflow-x-auto py-1 scrollbar-none shrink-0">
-          {categories.map((cat) => {
-            const isActive = activeTab === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveTab(cat)}
-                className={`
-                  px-[13px] py-[6px] rounded-full text-[11px] font-medium
-                  whitespace-nowrap transition-all duration-150
-                  border cursor-pointer
-                  ${
-                    isActive
-                      ? "bg-[#261A14] text-[#E8743A] border-[#E8743A]/40"
-                      : "text-[#A07050] border-[#3D2A18] hover:bg-[#1C1410] hover:text-[#C8A888]"
-                  }
-                `}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="w-full font-['DM_Sans',sans-serif] text-left px-4 py-4">
 
       {/* ── Masonry Grid Layout ── */}
-      {filteredGems.length === 0 ? (
+      {gems.length === 0 ? (
         <div className="w-full flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#3D2A18] rounded-2xl bg-[#110C08]">
           <i className="ti ti-search text-3xl text-[#6B4830] mb-2" />
           <p className="text-sm text-[#A07050]">No gems found in this category.</p>
         </div>
       ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance] w-full px-4">
-          {filteredGems.map((gem) => (
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance] w-full">
+          {gems.map((gem) => (
             <div
               key={gem.id}
               className="
@@ -244,6 +194,10 @@ export default function MasonryGrid() {
                 hover:border-[#E8743A]/40 hover:shadow-[0_12px_24px_-10px_rgba(232,116,58,0.15)]
                 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer
               "
+              onClick={(e) => {
+                e.stopPropagation();
+                onGemSelect?.(gem);
+              }}
             >
               {/* Image Container with Pinterest dynamic aspect ratio */}
               <div className={`relative overflow-hidden bg-[#110C08] ${gem.aspectRatio}`}>
@@ -303,7 +257,7 @@ export default function MasonryGrid() {
                   <div className="flex items-center gap-2">
                     {/* Upvote Button */}
                     <button
-                      onClick={(e) => toggleUpvote(gem.id, e)}
+                      onClick={(e) => handleUpvote(gem.id, e)}
                       className={`
                         flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-semibold cursor-pointer transition-all duration-150
                         ${
@@ -319,7 +273,7 @@ export default function MasonryGrid() {
 
                     {/* Bookmark Button */}
                     <button
-                      onClick={(e) => toggleBookmark(gem.id, e)}
+                      onClick={(e) => handleBookmark(gem.id, e)}
                       className={`
                         w-7 h-7 flex items-center justify-center rounded-lg border text-[13px] cursor-pointer transition-all duration-150
                         ${
