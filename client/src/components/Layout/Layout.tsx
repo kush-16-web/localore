@@ -2,6 +2,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import RightPanel from './RightPanel';
+import BottomNav from './BottomNav';
 import { useGemPanel } from '../../context/GemPanelContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           isOpen={Boolean(selectedGem)}
         />
       </div>
+      {/* BottomNav — fixed positioned, mobile only */}
+      <BottomNav />
     </div>
   );
 }

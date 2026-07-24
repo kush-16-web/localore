@@ -44,7 +44,7 @@ export default function Sidebar() {
 
       <aside
         className="
-          w-56 shrink-0 flex flex-col h-full
+          w-56 shrink-0 hidden md:flex flex-col h-full
           bg-[#0D0906]
           border-r border-[#332010]
           font-['DM_Sans',sans-serif]
@@ -158,6 +158,8 @@ export default function Sidebar() {
           </p>
         </div>
       </aside>
+
+
     </>
   );
 }

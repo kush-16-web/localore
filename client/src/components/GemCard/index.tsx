@@ -14,7 +14,7 @@ export default function GemCard({ gem, onClick }: Props) {
 
 
       return (
-     <div className="flex flex-col">
+        <div className="flex flex-col">
 
   {/* Hero */}
   <div className="relative h-64 flex flex-col justify-center items-center ">
@@ -81,6 +81,11 @@ export default function GemCard({ gem, onClick }: Props) {
 
     </div>
 
+    {/* gem images */}
+    
+    <div className="flex items-center gap-2">
+        <img src={gem.image} alt="" className="w-32 h-32 rounded-xl" />
+    </div>
 
     {/* Info Grid */}
 
@@ -186,7 +191,8 @@ export default function GemCard({ gem, onClick }: Props) {
 
   </div>
 
-</div>
+    </div>
   )
 }
 
+  
