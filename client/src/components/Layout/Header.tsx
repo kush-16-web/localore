@@ -1,10 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import logo from "../../assets/logo.png"
 
 export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
+
+  // placeholder animation
+ const placeholders = [
+    { icon: "ti ti-ghost", text: "hidden spots" },
+    { icon: "ti ti-building", text: "areas" },
+    { icon: "ti ti-meat", text: "food stalls" },
+    { icon: "ti ti-coffee", text: "cafes" },
+    { icon: "ti ti-compass", text: "adventures" },
+  ];
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [phase, setPhase] = useState<'in' | 'out'>('in');
+
+  // animate placeholder — slide out down, swap word, slide in from top
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase('out');                          // trigger exit slide
+      setTimeout(() => {
+        setCurrentIdx((prev) => (prev + 1) % placeholders.length);
+        setPhase('in');                         // remount span → enter slide
+      }, 320);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header
@@ -18,7 +42,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <img src={logo} alt="Logo" className="w-10 h-10" />
           <span
-            className="text-[20px] font-semibold text-[#F5E6D0] tracking-wide"
+            className="text-[20px] hidden md:block  font-semibold text-[#F5E6D0] tracking-wide"
             style={{ fontFamily: "'Syne', sans-serif" }}
           >
             Localore
@@ -27,7 +51,7 @@ export default function Header() {
       {/* ── Search bar — full width ── */}
       <div
         className={`
-          flex items-center gap-2 w-[40%]
+          relative flex items-center gap-2 md:w-[40%] w-fit
           px-4 py-[7px] rounded-full
           bg-[#1C1410]
           border transition-all duration-150
@@ -35,18 +59,61 @@ export default function Header() {
         `}
       >
         <i className="ti ti-search text-[14px] text-[#A07050] shrink-0" />
+          
+              <div className="flex items-center mx-1">
+                <span
+              key={currentIdx}
+              className="text-[14px] text-[#E8A87C] font-['DM_Sans',sans-serif]"
+            >
+              Search&nbsp;
+              </span> 
+        {/* Animated Custom Floating Placeholder */}
+        {!searchFocused && (
+          <div className=" overflow-hidden h-[18px] flex items-center pointer-events-none">
+          
+              <span
+              key={currentIdx}
+              style={{
+                animation: phase === 'in'
+                  ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                  : 'placeholderSlideOut 0.28s ease-in forwards',
+              }}
+              className="text-[#E8A87C] text-[14px] font-['DM_Sans',sans-serif] whitespace-nowrap block"
+              > {placeholders[currentIdx].text}
+            </span>
+              <i
+              style={{
+                animation: phase === 'in'
+                  ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                  : 'placeholderSlideOut 0.28s ease-in forwards',
+              }}
+               className={`${placeholders[currentIdx].icon} text-[16px]  text-[#A07050] p-1`} />
+          </div>
+        )}
+              </div>
+
+        <style>{`
+          @keyframes placeholderSlideIn {
+            from { transform: translateY(-110%); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+          }
+          @keyframes placeholderSlideOut {
+            from { transform: translateY(0);    opacity: 1; }
+            to   { transform: translateY(110%); opacity: 0; }
+          }
+        `}</style>
         <input
           type="text"
-          placeholder="Search hidden spots, areas, food…"
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
+          placeholder=""
           className="
             flex-1 bg-transparent border-none outline-none
             text-[13px] text-[#F5E6D0]
-            placeholder-[#6B4830]
             font-['DM_Sans',sans-serif]
           "
         />
+      
         {/* kbd hint */}
         <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
       </div>
