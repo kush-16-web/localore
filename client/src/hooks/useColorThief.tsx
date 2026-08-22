@@ -1,44 +1,50 @@
 // src/hooks/useColorThief.tsx
-import { useEffect, useState, useRef } from "react"
-import * as ColorThief from "colorthief"
+import { useEffect, useState } from "react"
+import { getColorSync, getPaletteSync } from "colorthief"
 
 /**
- * Receives an image URL and returns the dominant colour as
- *   - rgb   → [r, g, b]
- *   - css   → `rgba(r,g,b,0.6)`
+ * Extracts colours from an image using colorthief v3.
+ *   - rgb     → dominant colour as [r, g, b]
+ *   - palette → up to N colours as [[r,g,b], ...]
+ *   - css     → dominant colour as `rgb(r g b)`
  *   - loading flag
  */
 export function useColorThief(imgSrc: string) {
   const [rgb, setRgb] = useState<number[]>([])
+  const [palette, setPalette] = useState<number[][]>([])
   const [loading, setLoading] = useState(true)
-  const imgRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
     if (!imgSrc) return
 
+    let cancelled = false
+
     const img = new Image()
-    img.crossOrigin = "anonymous"                // needed for external URLs
+    img.crossOrigin = "anonymous" // needed for external URLs
     img.src = imgSrc
     img.onload = () => {
+      if (cancelled) return
       try {
-        const thief = new (ColorThief as any).default()
-        // `getColor` returns [r,g,b]
-        const color = thief.getColor(img) as number[]
-        setRgb(color)
-      } catch (e) {
-        console.warn("ColorThief failed →", e)
+        const dominant = getColorSync(img)
+        const colors = getPaletteSync(img, { colorCount: 4 })
+        setRgb(dominant?.array() ?? [])
+        setPalette((colors ?? []).map((c) => c.array()))
+      } catch {
+        // tainted canvas / CORS issues — fall back silently
       } finally {
         setLoading(false)
       }
     }
     img.onerror = () => {
-      console.warn("Image failed to load for colour extraction")
-      setLoading(false)
+      if (!cancelled) setLoading(false)
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [imgSrc])
 
-  // Convert to CSS rgba string (0.6 opacity is a nice overlay)
-  const css = rgb.length === 3 ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.6)` : ""
+  const css = rgb.length === 3 ? `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})` : ""
 
-  return { rgb, css, loading, imgRef }
+  return { rgb, palette, css, loading }
 }

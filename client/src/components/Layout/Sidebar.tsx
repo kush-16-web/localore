@@ -45,7 +45,7 @@ export default function Sidebar() {
       <aside
         className="
           w-56 shrink-0 hidden md:flex flex-col h-full
-          bg-[#0D0906]
+          bg-[#0D0906]/60 backdrop-blur-xl
           border-r border-[#332010]
           font-['DM_Sans',sans-serif]
         "

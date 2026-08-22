@@ -1,6 +1,6 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useState,useEffect , useRef} from "react";
 import logo from "../../assets/logo.png"
 
 export default function Header() {
@@ -17,6 +17,14 @@ export default function Header() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [phase, setPhase] = useState<'in' | 'out'>('in');
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+
+    const handleContainerClick = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
   // animate placeholder — slide out down, swap word, slide in from top
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,11 +38,13 @@ export default function Header() {
     return () => clearInterval(interval);
   }, []);
 
+
+
   return (
     <header
       className="
         h-16 shrink-0 flex items-center justify-between gap-3 px-5
-        bg-[#110C08]
+        bg-[#110C08]/60 backdrop-blur-xl
         border-b border-[#332010]
         font-['DM_Sans',sans-serif]
       "
@@ -49,99 +59,87 @@ export default function Header() {
           </span>
         </div>
       {/* ── Search bar — full width ── */}
-      <div
+    <div
+    onClick={handleContainerClick}
         className={`
-          relative flex items-center gap-2 md:w-[40%] w-fit
-          px-4 py-[7px] rounded-full
-          bg-[#1C1410]
-          border transition-all duration-150
-          ${searchFocused ? "border-[#E8743A]" : "border-[#3D2A18]"}
+        relative flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
+        px-4 py-[7px] rounded-full
+        bg-[#1C1410]
+        border transition-all duration-150
+        ${searchFocused ? "border-[#E8743A]" : "border-[#3D2A18]"}
         `}
-      >
+    >
         <i className="ti ti-search text-[14px] text-[#A07050] shrink-0" />
-          
-              <div className="flex items-center mx-1">
-                <span
-              key={currentIdx}
-              className="text-[14px] text-[#E8A87C] font-['DM_Sans',sans-serif]"
+    
+        {/* Added min-w-0 and overflow-hidden to prevent parent stretching */}
+        <div className="flex items-center mx-1 min-w-0 overflow-hidden">
+            {!searchFocused && (
+                 <span
+                key={currentIdx}
+                className="md:text-[14px] text-[12px] text-[#E8A87C] font-['DM_Sans',sans-serif] shrink-0"
             >
-              Search&nbsp;
+                Search&nbsp;
               </span> 
-        {/* Animated Custom Floating Placeholder */}
-        {!searchFocused && (
-          <div className=" overflow-hidden h-[18px] flex items-center pointer-events-none">
-          
+            )}
+    
+            {/* Animated Custom Floating Placeholder */}
+            {!searchFocused && (
+            /* Added min-w-0 to allow placeholder text containment */
+            <div className="overflow-hidden h-[18px] flex items-center pointer-events-none min-w-0">
               <span
-              key={currentIdx}
-              style={{
-                animation: phase === 'in'
-                  ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
-                  : 'placeholderSlideOut 0.28s ease-in forwards',
-              }}
-              className="text-[#E8A87C] text-[14px] font-['DM_Sans',sans-serif] whitespace-nowrap block"
-              > {placeholders[currentIdx].text}
-            </span>
-              <i
-              style={{
-                animation: phase === 'in'
-                  ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
-                  : 'placeholderSlideOut 0.28s ease-in forwards',
-              }}
-               className={`${placeholders[currentIdx].icon} text-[16px]  text-[#A07050] p-1`} />
-          </div>
-        )}
-              </div>
+                key={currentIdx}
+                style={{
+                  animation: phase === 'in'
+                    ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                    : 'placeholderSlideOut 0.28s ease-in forwards',
+                }}
+                /* Added ellipsis configurations to avoid text overflow breaks */
+                className="text-[#E8A87C] md:text-[14px] text-[12px] font-['DM_Sans',sans-serif] whitespace-nowrap block overflow-hidden "
+              > 
+                {placeholders[currentIdx].text}
+              </span>
+                <i
+                style={{
+                  animation: phase === 'in'
+                    ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                    : 'placeholderSlideOut 0.28s ease-in forwards',
+                }}
+                className={`${placeholders[currentIdx].icon} md:text-[16px] text-[14px] text-[#A07050] p-1 shrink-0`} 
+              />
+            </div>
+          )}
+        </div>
 
-        <style>{`
-          @keyframes placeholderSlideIn {
-            from { transform: translateY(-110%); opacity: 0; }
-            to   { transform: translateY(0);     opacity: 1; }
-          }
-          @keyframes placeholderSlideOut {
-            from { transform: translateY(0);    opacity: 1; }
-            to   { transform: translateY(110%); opacity: 0; }
-          }
-        `}</style>
-        <input
-          type="text"
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          placeholder=""
-          className="
-            flex-1 bg-transparent border-none outline-none
-            text-[13px] text-[#F5E6D0]
-            font-['DM_Sans',sans-serif]
-          "
-        />
-      
-        {/* kbd hint */}
-        <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
-      </div>
+  <style>{`
+    @keyframes placeholderSlideIn {
+      from { transform: translateY(-110%); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+    @keyframes placeholderSlideOut {
+      from { transform: translateY(0);    opacity: 1; }
+      to   { transform: translateY(110%); opacity: 0; }
+    }
+  `}</style>
+  
+  <input
+  ref={searchInputRef}
+    type="text"
+    onFocus={() => setSearchFocused(true)}
+    onBlur={() => setSearchFocused(false)}
+    placeholder=""
+    /* Added min-w-0 to overwrite default browser block input sizing */
+    className="
+      flex-1 bg-transparent border-none outline-none min-w-0
+      text-[13px] text-[#F5E6D0]
+      font-['DM_Sans',sans-serif]
+    "
+  />
 
-      {/* ── Category tabs ── */}
-      {/* <nav className="flex items-center gap-[2px] shrink-0">
-        {categories.map((cat) => {
-          const isActive = activeTab === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => setActiveTab(cat)}
-              className={`
-                px-3 py-[5px] rounded-full text-[11px] font-medium
-                whitespace-nowrap transition-all duration-150
-                border cursor-pointer
-                ${
-                  isActive
-                    ? "bg-[#261A14] text-[#F5C842] border-[#3D2A18]"
-                    : "text-[#A07050] border-transparent hover:bg-[#1C1410] hover:text-[#C8A888]"
-                }
-              `}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </nav> */}
+  {/* kbd hint */}
+  <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
+</div>
+
+
 
       {/* ── Right actions ── */}
       <div className="flex items-center gap-2 shrink-0">
@@ -162,7 +160,7 @@ export default function Header() {
 
         {/* User avatar / login */}
         <button
-          className="
+          className="hidden md:block
             flex items-center gap-2 px-3 py-[6px] rounded-[10px]
             bg-[#1C1410] hover:bg-[#261A14]
             border border-[#3D2A18]
@@ -180,8 +178,8 @@ export default function Header() {
           >
             RJ
           </span>
-          <span className="text-[12px] text-[#C8A888] hidden lg:block">Raj J.</span>
-          <i className="ti ti-chevron-down text-[12px] text-[#6B4830] hidden lg:block" />
+          {/* <span className="text-[12px] text-[#C8A888] hidden lg:block">Raj J.</span>
+          <i className="ti ti-chevron-down text-[12px] text-[#6B4830] hidden lg:block" /> */}
         </button>
 
       </div>

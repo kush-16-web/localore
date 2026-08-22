@@ -1,15 +1,12 @@
-import { useState } from "react"
-import { useColorThief } from "../../hooks/useColorThief"
 import type { GemCardData } from "../MasonryGrid"
 
 type Props = {
     gem: GemCardData
-    onClick?: (gem: GemCardData) => void
+    onUpvoteToggle?: (id: number) => void
+    onBookmarkToggle?: (id: number) => void
 }
 
-export default function GemCard({ gem, onClick }: Props) {
-    const { css: bgOverlay } = useColorThief(gem.image)
-    const [isHover, setHover] = useState(false)
+export default function GemCard({ gem, onUpvoteToggle, onBookmarkToggle }: Props) {
 
 
 
@@ -56,12 +53,27 @@ export default function GemCard({ gem, onClick }: Props) {
     {/* Stats */}
     <div className="flex items-center justify-between">
 
-      <button className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-xl bg-[#1B120D] border border-[#3D2A18]">
-        <i className="ti ti-arrow-big-up text-[#E8743A]" />
+      <button
+        onClick={() => onUpvoteToggle?.(gem.id)}
+        className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-xl border transition-all duration-150 ${
+          gem.isUpvoted
+            ? "bg-[#E8743A]/15 border-[#E8743A]/30"
+            : "bg-[#1B120D] border-[#3D2A18]"
+        }`}
+      >
+        <i className={`ti ${gem.isUpvoted ? "ti-heart-filled text-[#E8743A]" : "ti-heart text-[#E8743A]"}`} />
         <span className="text-[#F5E6D0]">{gem.upvotes}</span>
       </button>
 
-      <button className="w-11 h-11 rounded-xl cursor-pointer bg-[#1B120D] border border-[#3D2A18]">
+      <button
+        onClick={() => onBookmarkToggle?.(gem.id)}
+        aria-label="Save gem"
+        className={`w-11 h-11 rounded-xl cursor-pointer border flex items-center justify-center transition-all duration-150 ${
+          gem.isBookmarked
+            ? "bg-[#261A14] border-[#E8743A]/30"
+            : "bg-[#1B120D] border-[#3D2A18]"
+        }`}
+      >
         <i className={`ti ${gem.isBookmarked ? "ti-bookmark-filled text-[#E8743A]" : "ti-bookmark text-[#F5E6D0]"}`} />
       </button>
 

@@ -9,7 +9,7 @@ export default function ExploreHeader({ activeTab, onTabChange }: ExploreHeaderP
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3 border-b border-[#332010] backdrop-blur-lg shrink-0">
       {/* Title + subtitle */}
-      <div className="flex flex-col items-start">
+      {/* <div className="flex flex-col items-start">
         <h2
           className="text-2xl font-semibold text-[#F5E6D0] tracking-wide"
           style={{ fontFamily: "'Syne', sans-serif" }}
@@ -19,7 +19,7 @@ export default function ExploreHeader({ activeTab, onTabChange }: ExploreHeaderP
         <p className="text-xs text-left text-[#A07050] mt-1">
           Discover hidden spots curated by locals, from quiet nature walks to legendary street food stalls.
         </p>
-      </div>
+      </div> */}
 
       {/* Category filter tabs */}
       <div className="flex items-center gap-[6px] overflow-x-auto py-1 scrollbar-none shrink-0">

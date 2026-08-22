@@ -10,7 +10,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Explore",   href: "/",           iconDefault: "ti-compass",          iconActive: "ti-compass-filled" },
   { label: "Map",       href: "/map",         iconDefault: "ti-map-pin",           iconActive: "ti-map-pin-filled" },
-  { label: "Saved Gems",   href: "/saved-gems",   iconDefault: "ti-bookmark",          iconActive: "ti-bookmark-filled" },
+  { label: "Saved Gems",   href: "/saved-gems",   iconDefault: "ti-diamond",          iconActive: "ti-diamond-filled" },
   { label: "Profile",   href: "/profile",    iconDefault: "ti-user",              iconActive: "ti-user-filled" },
 ];
 
