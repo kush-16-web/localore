@@ -50,7 +50,7 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
         <button
           onClick={onClose}
           aria-label="Close panel"
-          className="absolute right-5 top-5 z-20 grid h-9 w-9 place-items-center
+          className="absolute right-5 top-5 z-20 grid h-9 w-9 place-items-center cursor-pointer 
             rounded-full bg-black/40 text-[#F5E6D0] backdrop-blur-md ring-1 ring-white/10
             active:scale-90 hover:text-[#cd5a0e] transition-all"
         >
@@ -157,7 +157,7 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
             <Drawer.Title className="sr-only">{gem?.title}</Drawer.Title>
 
             {/* Floating close */}
-            <button
+            {/* <button
               onClick={onClose}
               aria-label="Close panel"
               className="absolute right-4 top-4 z-20 grid h-9 w-9 place-items-center
@@ -165,7 +165,7 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
                 active:scale-90 hover:text-[#cd5a0e] transition-all"
             >
               <i className="ti ti-x text-lg" />
-            </button>
+            </button> */}
 
             {/* Scrollable body */}
             <div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain px-5 pt-3 pb-8 space-y-5 scrollbar-none">

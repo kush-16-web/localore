@@ -124,7 +124,7 @@ export function GemActions({ gem, onUpvoteToggle, onBookmarkToggle }: GemActions
     <div className="flex gap-2.5">
       <button
         onClick={() => onUpvoteToggle?.(gem.id)}
-        className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl border text-sm font-semibold transition-all duration-150 active:scale-95 ${
+        className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-2 cursor-pointer rounded-2xl border text-sm font-semibold transition-all duration-150 active:scale-95 ${
           gem.isUpvoted
             ? 'border-[#E8743A]/40 bg-[#E8743A]/15 text-[#E8743A]'
             : 'border-white/10 bg-white/[0.06] text-[#F5E6D0]'
@@ -137,7 +137,7 @@ export function GemActions({ gem, onUpvoteToggle, onBookmarkToggle }: GemActions
       <button
         onClick={() => onBookmarkToggle?.(gem.id)}
         aria-label={gem.isBookmarked ? 'Remove from saved' : 'Save gem'}
-        className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border transition-all duration-150 active:scale-95 ${
+        className={`grid h-12 w-12 cursor-pointer shrink-0 place-items-center rounded-2xl border transition-all duration-150 active:scale-95 ${
           gem.isBookmarked
             ? 'border-[#E8743A]/40 bg-[#E8743A]/15 text-[#E8743A]'
             : 'border-white/10 bg-white/[0.06] text-[#F5E6D0]'
