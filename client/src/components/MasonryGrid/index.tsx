@@ -152,11 +152,43 @@ export const initialGems: GemCardData[] = [
     isBookmarked: false,
     isUpvoted: false,
     aspectRatio: "aspect-[4/5]"
+  },
+  {
+    id: 10,
+    title: "Tapi Sunset Kayak Nook",
+    category: "Nature",
+    area: "Vesu",
+    image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=600&q=80",
+    description: "Behind the boating club fence there's a small concrete slip where local kayakers launch. Golden hour here turns the whole river molten orange. Ask for Bhailal bhai if the gate is shut.",
+    upvotes: 64,
+    author: "Raj Joshi",
+    authorInitials: "RJ",
+    hours: "5 PM - 7 PM",
+    isBookmarked: false,
+    isUpvoted: false,
+    aspectRatio: "aspect-[3/4]"
+  },
+  {
+    id: 11,
+    title: "Old Mill Lane Archive Wall",
+    category: "Heritage",
+    area: "Piplod",
+    image: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=600&q=80",
+    description: "A crumbling textile mill wall covered in hand-painted trade signs from the 1940s. Best light is mid-morning. The chai cart across the street has been there just as long.",
+    upvotes: 38,
+    author: "Raj Joshi",
+    authorInitials: "RJ",
+    hours: "11 AM - 4 PM",
+    isBookmarked: true,
+    isUpvoted: false,
+    aspectRatio: "aspect-square"
   }
 ];
 
 type MasonryGridProps = {
   gems: GemCardData[];
+  emptyMessage?: string;
+  emptyHint?: string;
   onGemSelect?: (gem: GemCardData) => void;
   onBookmarkToggle?: (id: number) => void;
   onUpvoteToggle?: (id: number) => void;
@@ -375,7 +407,7 @@ function DesktopGemCard({
   );
 }
 
-export default function MasonryGrid({ gems, onGemSelect, onBookmarkToggle, onUpvoteToggle }: MasonryGridProps) {
+export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect, onBookmarkToggle, onUpvoteToggle }: MasonryGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const isMobile = useIsMobile();
@@ -448,7 +480,10 @@ export default function MasonryGrid({ gems, onGemSelect, onBookmarkToggle, onUpv
       {gems.length === 0 ? (
         <div className="w-full flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#3D2A18] rounded-2xl bg-[#110C08]">
           <i className="ti ti-search text-3xl text-[#6B4830] mb-2" />
-          <p className="text-sm text-[#A07050]">No gems found in this category.</p>
+          <p className="text-sm text-[#A07050]">{emptyMessage ?? "No gems found in this category."}</p>
+          {emptyHint && (
+            <p className="text-xs text-[#6B4830] mt-1.5 px-6">{emptyHint}</p>
+          )}
         </div>
       ) : (
         <div

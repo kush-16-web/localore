@@ -1,10 +1,15 @@
 "use client";
 
 import { useState,useEffect , useRef} from "react";
+import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png"
 
 export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
+  const { pathname } = useLocation();
+
+  // IG pattern — the profile page drops the search bar
+  const showSearch = pathname !== "/profile";
 
   // placeholder animation
  const placeholders = [
@@ -58,7 +63,8 @@ export default function Header() {
             Localore
           </span>
         </div>
-      {/* ── Search bar — full width ── */}
+      {/* ── Search bar — hidden on profile ── */}
+    {showSearch && (
     <div
     onClick={handleContainerClick}
         className={`
@@ -138,6 +144,7 @@ export default function Header() {
   {/* kbd hint */}
   <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
 </div>
+)}
 
 
 
@@ -159,9 +166,10 @@ export default function Header() {
         </button>
 
         {/* User avatar / login */}
-        <button
-          className="hidden md:block
-            flex items-center gap-2 px-3 py-[6px] rounded-[10px]
+        <Link
+          to="/profile"
+          className="hidden md:flex
+            items-center gap-2 px-3 py-[6px] rounded-[10px] no-underline
             bg-[#1C1410] hover:bg-[#261A14]
             border border-[#3D2A18]
             transition-all duration-150 cursor-pointer
@@ -178,9 +186,9 @@ export default function Header() {
           >
             RJ
           </span>
-          {/* <span className="text-[12px] text-[#C8A888] hidden lg:block">Raj J.</span>
-          <i className="ti ti-chevron-down text-[12px] text-[#6B4830] hidden lg:block" /> */}
-        </button>
+          <span className="text-[12px] text-[#C8A888] hidden lg:block">Raj J.</span>
+          <i className="ti ti-chevron-down text-[12px] text-[#6B4830] hidden lg:block" />
+        </Link>
 
       </div>
     </header>

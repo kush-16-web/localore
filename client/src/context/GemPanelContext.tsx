@@ -1,5 +1,12 @@
 import { createContext, useContext, useState } from "react";
 import { initialGems, type GemCardData } from "../components/MasonryGrid";
+import { CURRENT_USER } from "../data/constants";
+
+// Fields the user fills in when sharing a gem — the rest is derived
+export type GemDraft = Pick<
+  GemCardData,
+  "title" | "category" | "area" | "image" | "description" | "hours"
+>;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type GemPanelContextValue = {
@@ -9,6 +16,7 @@ type GemPanelContextValue = {
   closePanel: () => void;
   toggleUpvote: (id: number) => void;
   toggleBookmark: (id: number) => void;
+  addGem: (draft: GemDraft) => GemCardData;
 };
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -43,6 +51,31 @@ export function GemPanelProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const ASPECT_RATIOS = [
+    "aspect-[3/4]",
+    "aspect-[4/5]",
+    "aspect-square",
+    "aspect-[4/3]",
+    "aspect-[16/9]",
+  ];
+
+  // Mock-mode persistence — new gems live in state until the backend exists
+  const addGem = (draft: GemDraft): GemCardData => {
+    const gem: GemCardData = {
+      ...draft,
+      id: Math.max(0, ...gems.map((g) => g.id)) + 1,
+      upvotes: 0,
+      author: CURRENT_USER.name,
+      authorInitials: CURRENT_USER.initials,
+      isBookmarked: false,
+      isUpvoted: false,
+      aspectRatio:
+        ASPECT_RATIOS[Math.floor(Math.random() * ASPECT_RATIOS.length)],
+    };
+    setGems((prev) => [gem, ...prev]);
+    return gem;
+  };
+
   return (
     <GemPanelContext.Provider
       value={{
@@ -52,6 +85,7 @@ export function GemPanelProvider({ children }: { children: React.ReactNode }) {
         closePanel,
         toggleUpvote,
         toggleBookmark,
+        addGem,
       }}
     >
       {children}
