@@ -1,4 +1,5 @@
 import Layout from './components/Layout/Layout'
+import VirtualOffice from './pages/VirtualOffice'
 import Explore from './pages/Explore'
 import Profile from './pages/Profile'
 import MapPage from './pages/MapPage'
@@ -14,7 +15,8 @@ function App() {
       <GemPanelProvider>
         <Layout>
           <Routes>
-            <Route path='/' element={<Explore />} />
+            <Route path='/' element={<VirtualOffice />} />
+            <Route path='/explore' element={<Explore />} />
             <Route path='/map' element={<MapPage />} />
             <Route path='/profile' element={<Profile />} />
             <Route path='/messages' element={<Messages />} />
