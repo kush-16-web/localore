@@ -13,22 +13,29 @@ function App() {
   return (
     <BrowserRouter>
       <GemPanelProvider>
-        <Layout>
-          <Routes>
-            <Route path='/' element={<VirtualOffice />} />
-            <Route path='/explore' element={<Explore />} />
-            <Route path='/map' element={<MapPage />} />
-            <Route path='/profile' element={<Profile />} />
-            <Route path='/messages' element={<Messages />} />
+        <Routes>
+          {/* VirtualOffice doesn't use the standard Layout */}
+          <Route path='/' element={<VirtualOffice />} />
 
-            {/* Legacy pages now live as tabs inside Profile */}
-            <Route path='/my-gems' element={<Navigate to='/profile?tab=gems' replace />} />
-            <Route path='/saved-gems' element={<Navigate to='/profile?tab=saved' replace />} />
+          {/* Other routes wrapped in Layout */}
+          <Route path='/*' element={
+            <Layout>
+              <Routes>
+                <Route path='/explore' element={<Explore />} />
+                <Route path='/map' element={<MapPage />} />
+                <Route path='/profile' element={<Profile />} />
+                <Route path='/messages' element={<Messages />} />
 
-            <Route path='/create-gem' element={<SubmitGem />} />
-            <Route path='*' element={<Navigate to='/' replace />} />
-          </Routes>
-        </Layout>
+                {/* Legacy pages now live as tabs inside Profile */}
+                <Route path='/my-gems' element={<Navigate to='/profile?tab=gems' replace />} />
+                <Route path='/saved-gems' element={<Navigate to='/profile?tab=saved' replace />} />
+
+                <Route path='/create-gem' element={<SubmitGem />} />
+                <Route path='*' element={<Navigate to='/explore' replace />} />
+              </Routes>
+            </Layout>
+          } />
+        </Routes>
       </GemPanelProvider>
     </BrowserRouter>
   )
