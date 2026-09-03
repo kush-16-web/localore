@@ -64,89 +64,87 @@ export default function Header() {
           </span>
         </div>
       {/* ── Search bar — hidden on profile ── */}
-    {showSearch && (
-    <div
-    onClick={handleContainerClick}
-        className={`
-        relative flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
-        px-4 py-[7px] rounded-full
-        bg-[#1C1410]
-        border transition-all duration-150
-        ${searchFocused ? "border-[#E8743A]" : "border-[#3D2A18]"}
-        `}
-    >
-        <i className="ti ti-search text-[14px] text-[#A07050] shrink-0" />
-    
-        {/* Added min-w-0 and overflow-hidden to prevent parent stretching */}
-        <div className="flex items-center mx-1 min-w-0 overflow-hidden">
-            {!searchFocused && (
-                 <span
-                key={currentIdx}
-                className="md:text-[14px] text-[12px] text-[#E8A87C] font-['DM_Sans',sans-serif] shrink-0"
-            >
-                Search&nbsp;
-              </span> 
+      {showSearch && (
+      <div
+      onClick={handleContainerClick}
+          className={`
+          relative flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
+          px-4 py-[7px] rounded-full
+          bg-[#1C1410]
+          border transition-all duration-150
+          ${searchFocused ? "border-[#E8743A]" : "border-[#3D2A18]"}
+          `}
+      >
+          <i className="ti ti-search text-[14px] text-[#A07050] shrink-0" />
+      
+          {/* Added min-w-0 and overflow-hidden to prevent parent stretching */}
+          <div className="flex items-center mx-1 min-w-0 overflow-hidden">
+              {!searchFocused && (
+                  <span
+                  key={currentIdx}
+                  className="md:text-[14px] text-[12px] text-[#E8A87C] font-['DM_Sans',sans-serif] shrink-0"
+              >
+                  Search&nbsp;
+                </span> 
+              )}
+      
+              {/* Animated Custom Floating Placeholder */}
+              {!searchFocused && (
+              /* Added min-w-0 to allow placeholder text containment */
+              <div className="overflow-hidden h-[18px] flex items-center pointer-events-none min-w-0">
+                <span
+                  key={currentIdx}
+                  style={{
+                    animation: phase === 'in'
+                      ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                      : 'placeholderSlideOut 0.28s ease-in forwards',
+                  }}
+                  /* Added ellipsis configurations to avoid text overflow breaks */
+                  className="text-[#E8A87C] md:text-[14px] text-[12px] font-['DM_Sans',sans-serif] whitespace-nowrap block overflow-hidden "
+                > 
+                  {placeholders[currentIdx].text}
+                </span>
+                  <i
+                  style={{
+                    animation: phase === 'in'
+                      ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
+                      : 'placeholderSlideOut 0.28s ease-in forwards',
+                  }}
+                  className={`${placeholders[currentIdx].icon} md:text-[16px] text-[14px] text-[#A07050] p-1 shrink-0`} 
+                />
+              </div>
             )}
-    
-            {/* Animated Custom Floating Placeholder */}
-            {!searchFocused && (
-            /* Added min-w-0 to allow placeholder text containment */
-            <div className="overflow-hidden h-[18px] flex items-center pointer-events-none min-w-0">
-              <span
-                key={currentIdx}
-                style={{
-                  animation: phase === 'in'
-                    ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
-                    : 'placeholderSlideOut 0.28s ease-in forwards',
-                }}
-                /* Added ellipsis configurations to avoid text overflow breaks */
-                className="text-[#E8A87C] md:text-[14px] text-[12px] font-['DM_Sans',sans-serif] whitespace-nowrap block overflow-hidden "
-              > 
-                {placeholders[currentIdx].text}
-              </span>
-                <i
-                style={{
-                  animation: phase === 'in'
-                    ? 'placeholderSlideIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards'
-                    : 'placeholderSlideOut 0.28s ease-in forwards',
-                }}
-                className={`${placeholders[currentIdx].icon} md:text-[16px] text-[14px] text-[#A07050] p-1 shrink-0`} 
-              />
-            </div>
-          )}
-        </div>
+          </div>
 
-  <style>{`
-    @keyframes placeholderSlideIn {
-      from { transform: translateY(-110%); opacity: 0; }
-      to   { transform: translateY(0);     opacity: 1; }
-    }
-    @keyframes placeholderSlideOut {
-      from { transform: translateY(0);    opacity: 1; }
-      to   { transform: translateY(110%); opacity: 0; }
-    }
-  `}</style>
-  
-  <input
-  ref={searchInputRef}
-    type="text"
-    onFocus={() => setSearchFocused(true)}
-    onBlur={() => setSearchFocused(false)}
-    placeholder=""
-    /* Added min-w-0 to overwrite default browser block input sizing */
-    className="
-      flex-1 bg-transparent border-none outline-none min-w-0
-      text-[13px] text-[#F5E6D0]
-      font-['DM_Sans',sans-serif]
-    "
-  />
+        <style>{`
+          @keyframes placeholderSlideIn {
+            from { transform: translateY(-110%); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+          }
+          @keyframes placeholderSlideOut {
+            from { transform: translateY(0);    opacity: 1; }
+            to   { transform: translateY(110%); opacity: 0; }
+          }
+        `}</style>
+        
+      <input
+      ref={searchInputRef}
+        type="text"
+        onFocus={() => setSearchFocused(true)}
+        onBlur={() => setSearchFocused(false)}
+        placeholder=""
+        /* Added min-w-0 to overwrite default browser block input sizing */
+        className="
+          flex-1 bg-transparent border-none outline-none min-w-0
+          text-[13px] text-[#F5E6D0]
+          font-['DM_Sans',sans-serif]
+        "
+      />
 
-  {/* kbd hint */}
-  <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
-</div>
-)}
-
-
+      {/* kbd hint */}
+      <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
+      </div>
+    )}
 
       {/* ── Right actions ── */}
       <div className="flex items-center gap-2 shrink-0">
