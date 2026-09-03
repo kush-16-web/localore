@@ -3,10 +3,19 @@
 import { useState,useEffect , useRef} from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png"
+import { useGemPanel } from "../../context/GemPanelContext";
 
 export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("localore-recent-searches") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
   const { pathname } = useLocation();
+  const { gems, searchQuery, setSearchQuery } = useGemPanel();
 
   // IG pattern — the profile page drops the search bar
   const showSearch = pathname !== "/profile";
@@ -23,6 +32,49 @@ export default function Header() {
   const [phase, setPhase] = useState<'in' | 'out'>('in');
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchShellRef = useRef<HTMLDivElement>(null);
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const suggestions = normalizedQuery
+    ? gems
+        .filter((gem) => {
+          const searchable = [
+            gem.title,
+            ...(gem.tags ?? []),
+            gem.category,
+            gem.area,
+            gem.description,
+          ]
+            .join(" ")
+            .toLowerCase();
+          return searchable.includes(normalizedQuery);
+        })
+        .slice(0, 5)
+    : [];
+
+  const saveRecentSearch = (value: string) => {
+    const cleaned = value.trim();
+    if (!cleaned) return;
+    setRecentSearches((previous) => {
+      const next = [cleaned, ...previous.filter((item) => item.toLowerCase() !== cleaned.toLowerCase())].slice(0, 8);
+      localStorage.setItem("localore-recent-searches", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const selectSearch = (value: string) => {
+    setSearchQuery(value);
+    saveRecentSearch(value);
+    setSearchFocused(false);
+  };
+
+  const clearRecentSearch = (value: string) => {
+    setRecentSearches((previous) => {
+      const next = previous.filter((item) => item !== value);
+      localStorage.setItem("localore-recent-searches", JSON.stringify(next));
+      return next;
+    });
+  };
 
 
     const handleContainerClick = () => {
@@ -43,12 +95,22 @@ export default function Header() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!searchShellRef.current?.contains(event.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
 
 
   return (
     <header
       className="
-        h-16 shrink-0 flex items-center justify-between gap-3 px-5
+        relative z-[100] h-16 shrink-0 flex items-center justify-between gap-3 px-5
         bg-[#110C08]/60 backdrop-blur-xl
         border-b border-[#332010]
         font-['DM_Sans',sans-serif]
@@ -66,9 +128,10 @@ export default function Header() {
       {/* ── Search bar — hidden on profile ── */}
       {showSearch && (
       <div
+      ref={searchShellRef}
       onClick={handleContainerClick}
           className={`
-          relative flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
+          relative z-[110] flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
           px-4 py-[7px] rounded-full
           bg-[#1C1410]
           border transition-all duration-150
@@ -79,7 +142,7 @@ export default function Header() {
       
           {/* Added min-w-0 and overflow-hidden to prevent parent stretching */}
           <div className="flex items-center mx-1 min-w-0 overflow-hidden">
-              {!searchFocused && (
+              {!searchFocused && !searchQuery.trim() && (
                   <span
                   key={currentIdx}
                   className="md:text-[14px] text-[12px] text-[#E8A87C] font-['DM_Sans',sans-serif] shrink-0"
@@ -89,7 +152,7 @@ export default function Header() {
               )}
       
               {/* Animated Custom Floating Placeholder */}
-              {!searchFocused && (
+              {!searchFocused && !searchQuery.trim() && (
               /* Added min-w-0 to allow placeholder text containment */
               <div className="overflow-hidden h-[18px] flex items-center pointer-events-none min-w-0">
                 <span
@@ -130,8 +193,12 @@ export default function Header() {
       <input
       ref={searchInputRef}
         type="text"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") saveRecentSearch(searchQuery);
+        }}
         onFocus={() => setSearchFocused(true)}
-        onBlur={() => setSearchFocused(false)}
         placeholder=""
         /* Added min-w-0 to overwrite default browser block input sizing */
         className="
@@ -143,8 +210,47 @@ export default function Header() {
 
       {/* kbd hint */}
       <span className="text-[10px] text-[#6B4830] shrink-0 hidden lg:block">⌘K</span>
+
+      {searchFocused && (normalizedQuery ? suggestions.length > 0 : recentSearches.length > 0) && (
+        <div
+          role="listbox"
+          className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-[#333333] bg-[#111111] py-2 text-left shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <p className="px-4 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#777777]">
+            {normalizedQuery ? "Suggestions" : "Recent searches"}
+          </p>
+          {(normalizedQuery ? suggestions : recentSearches).map((item) => {
+            const value = typeof item === "string" ? item : item.title;
+            return (
+              <div key={value} className="group flex items-center hover:bg-[#202020]">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="flex min-w-0 flex-1 items-center gap-3 bg-transparent px-4 py-2.5 text-left text-[13px] text-[#D0D0D0] cursor-pointer"
+                  onClick={() => selectSearch(value)}
+                >
+                  <i className={`ti ${normalizedQuery ? "ti-search" : "ti-history"} shrink-0 text-[15px] text-[#777777]`} />
+                  <span className="truncate">{value}</span>
+                </button>
+                {!normalizedQuery && (
+                  <button
+                    type="button"
+                    aria-label={`Clear recent search ${value}`}
+                    className="mr-3 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-transparent text-[#777777] opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:bg-[#333333] hover:text-white cursor-pointer"
+                    onClick={() => clearRecentSearch(value)}
+                  >
+                    <i className="ti ti-x text-[14px]" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       </div>
-    )}
+      )}
 
       {/* ── Right actions ── */}
       <div className="flex items-center gap-2 shrink-0">

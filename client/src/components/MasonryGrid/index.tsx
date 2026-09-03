@@ -8,6 +8,7 @@ export interface GemCardData {
   area: string;
   image: string;
   description: string;
+  tags?: string[];
   upvotes: number;
   author: string;
   authorInitials: string;

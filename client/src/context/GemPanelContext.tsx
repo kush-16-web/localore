@@ -11,6 +11,8 @@ export type GemDraft = Pick<
 // ── Types ────────────────────────────────────────────────────────────────────
 type GemPanelContextValue = {
   gems: GemCardData[];
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
   selectedGem: GemCardData | null;
   openPanel: (gem: GemCardData) => void;
   closePanel: () => void;
@@ -26,6 +28,7 @@ const GemPanelContext = createContext<GemPanelContextValue | null>(null);
 export function GemPanelProvider({ children }: { children: React.ReactNode }) {
   const [gems, setGems] = useState<GemCardData[]>(initialGems);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Derived so the panel always shows fresh data after upvote/save
   const selectedGem = gems.find((g) => g.id === selectedId) ?? null;
@@ -80,6 +83,8 @@ export function GemPanelProvider({ children }: { children: React.ReactNode }) {
     <GemPanelContext.Provider
       value={{
         gems,
+        searchQuery,
+        setSearchQuery,
         selectedGem,
         openPanel,
         closePanel,
