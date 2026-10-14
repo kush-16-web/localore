@@ -81,40 +81,6 @@ const DEFAULT_ALTERNATES = [
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
 ];
 
-const CURATED_FALLBACKS = [
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1544967082-d9d25d867d66?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1000&q=80",
-  "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1000&q=80",
-];
-
-function getDistinctThumbnails(heroImage: string, category: string): string[] {
-  const result: string[] = [heroImage];
-  const extractId = (url: string) => {
-    const match = url.match(/photo-([0-9a-zA-Z-]+)/);
-    return match ? match[1] : url;
-  };
-  const heroId = extractId(heroImage);
-
-  const candidates = [
-    ...(CATEGORY_ALTERNATES[category] ?? DEFAULT_ALTERNATES),
-    ...CURATED_FALLBACKS,
-  ];
-
-  for (const cand of candidates) {
-    const candId = extractId(cand);
-    const isDup = result.some((r) => extractId(r) === candId);
-    if (!isDup && candId !== heroId) {
-      result.push(cand);
-    }
-    if (result.length >= 3) break;
-  }
-  return result;
-}
-
 interface HeartAnimState {
   id: number;
   x: number;
@@ -143,13 +109,19 @@ export default function MobileGemSheet({
   const [scrollY, setScrollY] = useState(0);
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  // Top handle pull-to-dismiss state
-  const [handleDragY, setHandleDragY] = useState(0);
-  const handleTouchStartRef = useRef<{ y: number; time: number } | null>(null);
-
   // Lightbox state for true original uncropped photo view
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
+  // Prevent click-through when closing lightbox
+  const [isPointerBlocked, setIsPointerBlocked] = useState(false);
+
+  const handleCloseLightbox = () => {
+    setIsLightboxOpen(false);
+    setIsPointerBlocked(true);
+    setTimeout(() => {
+      setIsPointerBlocked(false);
+    }, 250);
+  };
 
   // References for double tap like on hero
   const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(
@@ -176,9 +148,9 @@ export default function MobileGemSheet({
     setSelectedImage(null);
     setIsDescriptionExpanded(false);
     setIsLightboxOpen(false);
+    setIsPointerBlocked(false);
     setScrollY(0);
     setHasScrolled(false);
-    setHandleDragY(0);
   }
 
   const activeImage = selectedImage ?? gem?.image ?? "";
@@ -227,8 +199,10 @@ export default function MobileGemSheet({
   const distanceText =
     gem.distanceKm !== undefined ? formatDistance(gem.distanceKm) : null;
 
-  // Build distinct thumbnails: primary image + curated category photos (guaranteed 3 unique)
-  const thumbnails = getDistinctThumbnails(gem.image, gem.category);
+  // Build thumbnails: primary image + curated category photos in original order
+  const alternates =
+    CATEGORY_ALTERNATES[gem.category] ?? DEFAULT_ALTERNATES;
+  const thumbnails = [gem.image, alternates[0], alternates[1]];
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const currentScroll = e.currentTarget.scrollTop;
@@ -352,7 +326,7 @@ export default function MobileGemSheet({
         noBodyStyles={true}
         disablePreventScroll={true}
         dismissible={true}
-        closeThreshold={0.2}
+        closeThreshold={0.3}
       >
         <Drawer.Portal>
           {/* Backdrop with smooth blur and fade */}
@@ -363,6 +337,7 @@ export default function MobileGemSheet({
             - rounded-t-[32px] permanent rounded top corners
             - overflow-hidden clips hero image directly under rounded corners (NO brown header bar!)
             - h-[92dvh] leaves ~8-10% gap from top for backdrop and rounded sheet experience
+            - Vaul provides single authoritative drag handling with fluid spring-back and deliberate dismissal
           */}
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-[999] md:hidden
@@ -375,10 +350,10 @@ export default function MobileGemSheet({
               right: 0,
               width: "100%",
               maxWidth: "100vw",
-              transform:
-                handleDragY > 0 ? `translateY(${handleDragY}px)` : undefined,
-              transition: handleDragY === 0 ? "transform 200ms ease" : "none",
+              pointerEvents:
+                isLightboxOpen || isPointerBlocked ? "none" : "auto",
             }}
+            inert={isLightboxOpen ? true : undefined}
           >
             <style>{`
               @keyframes mobileHeartPopSmooth {
@@ -419,33 +394,9 @@ export default function MobileGemSheet({
               {gem.description}
             </Drawer.Description>
 
-            {/* ── Top Drag Handle Bar (Draggable down to close) ────────────────── */}
-            <div
-              onTouchStart={(e) => {
-                handleTouchStartRef.current = {
-                  y: e.touches[0].clientY,
-                  time: Date.now(),
-                };
-              }}
-              onTouchMove={(e) => {
-                if (!handleTouchStartRef.current) return;
-                const dy = e.touches[0].clientY - handleTouchStartRef.current.y;
-                if (dy > 0) {
-                  setHandleDragY(dy);
-                }
-              }}
-              onTouchEnd={() => {
-                if (!handleTouchStartRef.current) return;
-                if (handleDragY > 65) {
-                  onClose();
-                }
-                setHandleDragY(0);
-                handleTouchStartRef.current = null;
-              }}
-              className="absolute top-2 inset-x-0 z-50 flex justify-center py-2.5 cursor-grab active:cursor-grabbing pointer-events-auto touch-none"
-              title="Drag down to close"
-            >
-              <Drawer.Handle className="h-1.5 w-12 rounded-full bg-white/45 shadow-sm" />
+            {/* ── Top Drag Handle for Pull-Down Dismiss ──────────────────────── */}
+            <div className="absolute top-2.5 inset-x-0 z-40 flex justify-center py-2 cursor-grab active:cursor-grabbing pointer-events-auto">
+              <Drawer.Handle className="h-1.5 w-12 rounded-full bg-white/40 shadow-sm hover:bg-white/60 transition-colors" />
             </div>
 
             {/* ── Floating Header Navigation Icons directly over the Photograph ── */}
@@ -846,12 +797,12 @@ export default function MobileGemSheet({
             </footer>
           </Drawer.Content>
 
-          {/* ── Fullscreen Uncropped Photo Lightbox inside Portal ───────────── */}
+          {/* ── Fullscreen Uncropped Photo Lightbox ────────────────────────── */}
           <PhotoLightbox
             images={thumbnails}
             initialIndex={lightboxInitialIndex}
             isOpen={isLightboxOpen}
-            onClose={() => setIsLightboxOpen(false)}
+            onClose={handleCloseLightbox}
             title={gem.title}
             onSelectImage={(img) => setSelectedImage(img)}
           />

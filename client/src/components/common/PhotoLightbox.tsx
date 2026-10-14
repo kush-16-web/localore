@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ChevronLeft, X, ZoomIn, ZoomOut } from "lucide-react";
 
 interface PhotoLightboxProps {
   images: string[];
@@ -119,12 +120,14 @@ export default function PhotoLightbox({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, handleNext, handlePrev]);
 
-  if (!isOpen || images.length === 0) return null;
+  if (!isOpen || typeof document === "undefined" || images.length === 0)
+    return null;
 
   const currentImage = images[currentIndex] || images[0];
 
   // Pointer event handlers for swipe navigation and downward pull dismiss
   const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
     if (e.button !== 0) return;
     dragStartRef.current = {
       x: e.clientX,
@@ -134,6 +137,7 @@ export default function PhotoLightbox({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    e.stopPropagation();
     if (!dragStartRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
@@ -153,14 +157,15 @@ export default function PhotoLightbox({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
     if (!dragStartRef.current) return;
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
     const dist = Math.hypot(dx, dy);
     const now = Date.now();
 
-    // Downward swipe to dismiss
-    if (dragY > 75) {
+    // Downward swipe to dismiss (only when not zoomed in)
+    if (scale === 1 && dragY > 80 && Math.abs(dy) > Math.abs(dx) * 1.5) {
       onClose();
       setDragY(0);
       dragStartRef.current = null;
@@ -168,8 +173,8 @@ export default function PhotoLightbox({
     }
     setDragY(0);
 
-    // Horizontal swipe between photos
-    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    // Horizontal swipe between photos (only when scale === 1 so pinching/panning doesn't switch)
+    if (scale === 1 && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
       if (dx < 0) {
         handleNext();
       } else {
@@ -202,7 +207,9 @@ export default function PhotoLightbox({
     dragStartRef.current = null;
   };
 
-  const handleClose = (e?: React.MouseEvent | React.TouchEvent) => {
+  const handleClose = (
+    e?: React.MouseEvent | React.TouchEvent | React.PointerEvent
+  ) => {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -210,15 +217,18 @@ export default function PhotoLightbox({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`Original photo view of ${title}`}
       onClick={(e) => e.stopPropagation()}
-      onPointerDownCapture={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[1000] bg-black flex flex-col select-none overflow-hidden touch-none"
+      onPointerUp={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[99999] bg-black flex flex-col select-none overflow-hidden touch-none"
       style={{
         transform: dragY > 0 ? `translateY(${dragY}px)` : "none",
         opacity: dragY > 0 ? Math.max(0.3, 1 - dragY / 300) : 1,
@@ -274,7 +284,7 @@ export default function PhotoLightbox({
         </div>
       </header>
 
-      {/* ── Main Photo Container with Visible Next & Prev Navigation Buttons ── */}
+      {/* ── Main Photo Container with Swipe Gestures (No Arrows) ─────────── */}
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -282,22 +292,6 @@ export default function PhotoLightbox({
         onPointerCancel={handlePointerUp}
         className="flex-1 w-full h-full flex items-center justify-center p-2 relative overflow-hidden"
       >
-        {/* Previous Image Arrow Button */}
-        {images.length > 1 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePrev();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            aria-label="Previous photo"
-            className="absolute left-3 z-50 grid h-12 w-12 place-items-center rounded-full bg-black/75 text-white ring-2 ring-white/30 hover:bg-black/95 hover:scale-105 active:scale-90 transition-all cursor-pointer shadow-2xl pointer-events-auto"
-          >
-            <ChevronLeft size={26} className="stroke-[2.5]" />
-          </button>
-        )}
-
         {/* Main Image with uncropped aspect ratio */}
         <img
           key={currentIndex}
@@ -312,26 +306,10 @@ export default function PhotoLightbox({
                 : "none",
           }}
         />
-
-        {/* Next Image Arrow Button */}
-        {images.length > 1 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNext();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            aria-label="Next photo"
-            className="absolute right-3 z-50 grid h-12 w-12 place-items-center rounded-full bg-black/75 text-white ring-2 ring-white/30 hover:bg-black/95 hover:scale-105 active:scale-90 transition-all cursor-pointer shadow-2xl pointer-events-auto"
-          >
-            <ChevronRight size={26} className="stroke-[2.5]" />
-          </button>
-        )}
       </div>
 
-      {/* ── Bottom Filmstrip Thumbnail Strip & Indicators ──────────────────── */}
-      <footer className="relative z-40 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-2 px-4 flex flex-col items-center gap-2.5 bg-gradient-to-t from-black/90 to-transparent">
+      {/* ── Bottom Filmstrip Thumbnail Strip (No Numbers) ───────────────────── */}
+      <footer className="relative z-40 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-2 px-4 flex flex-col items-center gap-2 bg-gradient-to-t from-black/90 to-transparent">
         {/* Filmstrip Thumbnails Row (Tap to switch image) */}
         <div className="flex items-center justify-center gap-2.5 w-full max-w-sm mx-auto overflow-x-auto py-1 px-2 scrollbar-none">
           {images.map((thumbUrl, idx) => {
@@ -357,25 +335,17 @@ export default function PhotoLightbox({
                   alt={`Thumb ${idx + 1}`}
                   className="h-full w-full object-cover pointer-events-none group-hover:scale-105 transition-transform"
                 />
-                <span
-                  className={`absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                    isActive
-                      ? "bg-[#E8743A] text-[#120B08]"
-                      : "bg-black/60 text-white/80"
-                  }`}
-                >
-                  {idx + 1}
-                </span>
               </button>
             );
           })}
         </div>
 
-        <span className="text-[10px] text-white/50 tracking-wider">
-          Tap arrows or thumbnails to switch · Double tap to zoom
+        <span className="text-[11px] text-white/40 tracking-wider">
+          Swipe to view · Double-tap to zoom
         </span>
       </footer>
-    </div>
+    </div>,
+    document.body
   );
 }
 

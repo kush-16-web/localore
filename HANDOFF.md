@@ -1,4 +1,5 @@
-# LOCALORE — MOBILE PASS 1.4: DRAG-TO-DISMISS, SCROLL HINT REPAIR & LIGHTBOX PHOTO SWITCHING
+# LOCALORE — MOBILE PASS 1.5: STRICT REGRESSION HOTFIX
+## Restored Physics Dragging, Simplified Photo Lightbox & Event Isolation
 
 **Date:** October 14, 2026  
 **Status:** Completed & Tested  
@@ -8,16 +9,23 @@
 
 ## 📋 Summary of Completed Work
 
-In Pass 1.4, all mobile sheet drag, dismissal, scroll indicator, and photo switching behaviors were perfected:
-- **Draggable Bottom Sheet & 8-10% Top Gap:** Sheet opens to `h-[92dvh]` (~8-10% gap from the top of the mobile screen), displaying top rounded corners (`rounded-t-[32px]`) and the blurred backdrop overlay behind it.
-- **Physics Drag-to-Dismiss & Handle Drag:** Removed rigid `snapPoints={["480px", 1]}` that trapped the drawer at half-screen and prevented downward swipe dismissal. Integrated `<Drawer.Handle />` with touch drag tracking (`handleDragY`), enabling natural downward dragging to close the sheet directly.
-- **Permanent "Scroll for Details" Unmount:** Added `hasScrolled` state. Once the user scrolls down by even 5px (`!hasScrolled && scrollY < 5`), the indicator completely unmounts from the DOM, permanently preventing recurring keyframe pop-ups.
-- **True Uncropped Lightbox Photo Switching:**
-  - Added on-screen `ChevronLeft` and `ChevronRight` navigation buttons with pointer events for both mouse and touch.
-  - Added interactive, numbered filmstrip thumbnail switcher at the bottom with real-time active indicators.
-  - Implemented `getDistinctThumbnails(gem.image, gem.category)` to guarantee 3 unique, non-duplicating photos for every gem.
-  - Synchronized `onSelectImage` prop back to `MobileGemSheet` so changing photos in the lightbox updates the sheet's active hero image.
-- **Event Isolation & Non-Bubbling Lightbox Close:** Nested `PhotoLightbox` inside `Drawer.Portal`, guarded `Drawer.Root`'s `onOpenChange` against `isLightboxOpen`, and added `stopPropagation` on pointer down. Closing the lightbox now strictly closes the lightbox while preserving the underlying Gem Details view.
+In Pass 1.5, three specific mobile regressions were resolved with surgical precision:
+1. **Restored Single-Authoritative Vaul Dragging & Fluid Spring-Back:**
+   - Removed competing custom transforms (`handleDragY`, `handleTouchStartRef`, `onTouchMove/End` overrides).
+   - Vaul is now the single authoritative drag controller on `<Drawer.Handle />`.
+   - Small downward drags (30–60px) smoothly follow the finger and spring back to open position on release without dismissing.
+   - Deliberate downward drags past `closeThreshold={0.3}` or deliberate downward flicks dismiss the sheet smoothly.
+2. **Simplified Clean Photo Lightbox:**
+   - Removed large left/right navigation arrows from the photo container.
+   - Removed numbered badges (`1`, `2`, `3`) from filmstrip thumbnails.
+   - Removed clutter instructional text, keeping clean subtle `"Swipe to view · Double-tap to zoom"`.
+   - Preserved genuine gem photo order without unrelated fallback substitutions.
+   - Clean horizontal swipe to switch photos; zooming/panning is preserved when `scale > 1` without accidental photo switching.
+3. **Complete Isolation of Photo Interactions from Underlying Map & Sheet:**
+   - Rendered `PhotoLightbox` into `document.body` via `createPortal` with `z-[99999]`.
+   - Stopped all touch and pointer event propagation at the lightbox root (`onClick`, `onPointerDown`, `onTouchStart`, `onTouchMove`, `onTouchEnd`).
+   - While lightbox is open or during a 250ms closing grace period, `Drawer.Content` has `pointer-events: none` and `inert`, completely preventing touch/click leakage to the underlying map iframe, "Open Map" link, and "Get Directions" button.
+
 
 
 ---
