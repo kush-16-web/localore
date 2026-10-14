@@ -190,8 +190,7 @@ export function GemActions({ gem, onUpvoteToggle, onBookmarkToggle }: GemActions
         target="_blank"
         rel="noreferrer"
         aria-label="Open Directions"
-        className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#E8743A] text-[#120B08]
-          shadow-lg shadow-[#E8743A]/25 active:scale-95 transition-transform"
+        className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] active:scale-95 transition-all cursor-pointer shadow-none"
       >
         <i className="ti ti-map text-lg" />
       </a>

@@ -9,7 +9,7 @@ import { useColorThief } from '../../hooks/useColorThief';
 const FALLBACK_ACCENT = '232,116,58'; // brand orange #E8743A
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { selectedGem, closePanel, toggleUpvote, toggleBookmark } = useGemPanel();
+  const { selectedGem, closePanel, toggleUpvote, likeGem, toggleBookmark } = useGemPanel();
 
   // YT Music-style ambient colour — computed once here for the WHOLE app shell
   const { rgb, palette } = useColorThief(selectedGem?.image ?? '');
@@ -26,10 +26,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         style={{
           animation: 'ambientFade 900ms ease',
           background: `
-            radial-gradient(120% 90% at 20% 0%, rgba(${accent},0.40), transparent 60%),
-            radial-gradient(100% 80% at 85% 5%, rgba(${accentSoft},0.32), transparent 65%),
-            radial-gradient(90% 70% at 50% 25%, rgba(${accent},0.28), transparent 70%),
-            linear-gradient(to bottom, rgba(${accent},0.16), transparent 75%)`
+            radial-gradient(120% 90% at 20% 0%, rgba(${accent},0.12), transparent 60%),
+            radial-gradient(100% 80% at 85% 5%, rgba(${accentSoft},0.10), transparent 65%),
+            radial-gradient(90% 70% at 50% 25%, rgba(${accent},0.08), transparent 70%),
+            linear-gradient(to bottom, rgba(${accent},0.05), transparent 75%)`
         }}
       />
       <style>{`
@@ -39,12 +39,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }
       `}</style>
 
-      <Header />
+      <Header accent={accent} accentSoft={accentSoft} />
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        {/* Main content — now receives dynamic ambient illumination */}
+        <Sidebar accent={accent} accentSoft={accentSoft} />
+        {/* Main content — subtle low-contrast ambient illumination (20-30% intensity) */}
         <main className="relative flex-1 bg-[#100A06]/40 backdrop-blur-xl overflow-hidden flex flex-col">
-          {/* Dedicated main content dynamic color wash */}
+          {/* Dedicated main content dynamic color wash with lowered contrast */}
           <div
             key={`main-ambient-${selectedGem?.id ?? 'none'}`}
             aria-hidden
@@ -52,10 +52,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             style={{
               animation: 'ambientFade 900ms ease',
               background: `
-                radial-gradient(100% 70% at 50% 0%, rgba(${accent},0.38), transparent 75%),
-                radial-gradient(85% 65% at 20% 35%, rgba(${accentSoft},0.26), transparent 70%),
-                radial-gradient(80% 60% at 80% 55%, rgba(${accent},0.22), transparent 65%),
-                linear-gradient(to bottom, rgba(${accent},0.18), transparent 55%)
+                radial-gradient(100% 70% at 50% 0%, rgba(${accent},0.09), transparent 75%),
+                radial-gradient(85% 65% at 20% 35%, rgba(${accentSoft},0.07), transparent 70%),
+                radial-gradient(80% 60% at 80% 55%, rgba(${accent},0.06), transparent 65%),
+                linear-gradient(to bottom, rgba(${accent},0.04), transparent 55%)
               `
             }}
           />
@@ -69,6 +69,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           onClose={closePanel}
           isOpen={Boolean(selectedGem)}
           onUpvoteToggle={toggleUpvote}
+          onLikeGem={likeGem}
           onBookmarkToggle={toggleBookmark}
         />
       </div>

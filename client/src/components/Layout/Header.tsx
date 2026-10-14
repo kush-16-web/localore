@@ -5,7 +5,12 @@ import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png"
 import { useGemPanel } from "../../context/GemPanelContext";
 
-export default function Header() {
+type HeaderProps = {
+  accent?: string;
+  accentSoft?: string;
+};
+
+export default function Header({ accent, accentSoft }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -111,11 +116,23 @@ export default function Header() {
     <header
       className="
         relative z-[100] h-16 shrink-0 flex items-center justify-between gap-3 px-5
-        bg-[#110C08]/60 backdrop-blur-xl
+        bg-[#110C08]/75 backdrop-blur-xl
         border-b border-[#332010]
         font-['DM_Sans',sans-serif]
+        overflow-hidden
       "
     >
+      {/* Dynamic ambient color glow from ColorThief */}
+      {accent && (
+        <div
+          key={accent}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 transition-opacity duration-700"
+          style={{
+            background: `radial-gradient(ellipse 70% 140% at 50% -20%, rgba(${accent}, 0.22), rgba(${accentSoft ?? accent}, 0.08) 60%, transparent 85%)`,
+          }}
+        />
+      )}
         <div className="flex items-center gap-4 shrink-0">
           <Link to="/" className="flex items-center gap-3 no-underline">
             <img src={logo} alt="Logo" className="w-10 h-10" />
@@ -133,8 +150,8 @@ export default function Header() {
       ref={searchShellRef}
       onClick={handleContainerClick}
           className={`
-          relative z-[110] flex items-center gap-1 md:w-[35%] w-[calc(100%-100px)]
-          px-4 py-[7px] rounded-full
+          relative z-[110] flex items-center gap-1 flex-1 min-w-0 md:w-[35%] md:flex-initial
+          px-3 sm:px-4 py-[7px] rounded-full
           bg-[#1C1410]
           border transition-all duration-150
           ${searchFocused ? "border-[#E8743A]" : "border-[#3D2A18]"}

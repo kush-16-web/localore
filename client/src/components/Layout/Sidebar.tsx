@@ -13,7 +13,12 @@ type NavItem = {
 
 const AREA_COLORS = ["#E8743A", "#7AB648", "#F5C842", "#9B8FCC", "#2ABFCC", "#E05D5D"];
 
-export default function Sidebar() {
+type SidebarProps = {
+  accent?: string;
+  accentSoft?: string;
+};
+
+export default function Sidebar({ accent, accentSoft }: SidebarProps) {
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
   const tab = params.get("tab");
@@ -73,11 +78,23 @@ export default function Sidebar() {
     <aside
       className="
         w-56 shrink-0 hidden md:flex flex-col h-full
-        bg-[#0D0906]/60 backdrop-blur-xl
+        bg-[#0D0906]/75 backdrop-blur-xl
         border-r border-[#332010]
         font-['DM_Sans',sans-serif]
+        relative overflow-hidden
       "
     >
+      {/* Dynamic ambient color glow from ColorThief */}
+      {accent && (
+        <div
+          key={accent}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 transition-opacity duration-700"
+          style={{
+            background: `radial-gradient(circle at 15% 25%, rgba(${accent}, 0.16), transparent 75%), linear-gradient(to bottom, rgba(${accentSoft ?? accent}, 0.08), transparent 60%)`,
+          }}
+        />
+      )}
       {/* ── Browse ── */}
       <nav className="px-3 pt-5">
         <p className="text-[10px] text-left font-bold tracking-[0.10em] uppercase text-[#A07050] px-2 ">

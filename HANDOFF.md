@@ -1,14 +1,14 @@
-# LOCALORE — PASS 1.1 HANDOFF: ADAPTIVE AMBIENT THEME ENGINE & CATEGORY SVG ATMOSPHERES
+# LOCALORE — MOBILE UI POLISH PASS: CINEMATIC GEM DETAILS + SINGLE SCROLL + DOUBLE-TAP LIKE
 
-**Commit:** `c05cb9dc330c634db2fe8466e392ff152e9f6c0d`  
 **Date:** October 14, 2026  
-**Status:** Completed & Tested
+**Status:** Completed & Tested  
+**Next Planned Task:** Desktop Ambient Shell + Cinematic Gem Details
 
 ---
 
 ## 📋 Summary of Completed Work
 
-In Pass 1.1, Localore's ColorThief integration was transformed into an image-driven three-level ambient theme system with responsive vector atmospheres. The original visual identity (dark espresso baseline, warm orange accents, Pinterest-style masonry, mobile bottom sheet) was strictly preserved while enabling dynamic, place-inspired color environments.
+In this pass, Localore's mobile Gem Details experience was transformed into a continuous, single-scroll cinematic detail view that completely matches the target visual reference, eliminating nested draggable sheets and multi-snap peek states while implementing double-tap liking, overlay toggling, route-distance icon corrections, and sticky bottom navigation.
 
 ---
 
@@ -87,18 +87,22 @@ Centralized design tokens updated reactively on `:root`:
 ## 🧪 Validation & Test Results
 
 1. **Vitest Unit Tests (`npm test` in `client`)**
+   - `src/__tests__/mobileGem.test.ts`: 7/7 passed (single-tap overlay toggle delay, double-tap cancellation of single-tap, scroll gesture rejection, idempotent first like, repeat double-tap count preservation without unliking, actual like button unlike/like toggling, animation timing constraints).
    - `src/__tests__/geo.test.ts`: 5/5 passed.
    - `src/__tests__/location.test.ts`: 4/4 passed.
    - `src/__tests__/places.test.ts`: 2/2 passed.
-   - `src/__tests__/theme.test.ts`: 12/12 passed (Level 1 defaults, WCAG contrast, OKLab/OKLCH roundtrip, usability filters, perceptual distance, palette derivation, collective category generation, caching, CORS/fallback safety).
-   - **Total:** 4 test suites, 23 passed (100%).
+   - `src/__tests__/theme.test.ts`: 12/12 passed.
+   - **Total:** 5 test suites, 30 tests passed (100%).
 
 2. **Production Build (`npm run build` in `client`)**
-   - TypeScript check (`tsc -b`) and Vite production bundle generated cleanly without errors.
+   - TypeScript compilation (`tsc -b`) and Vite production bundle generated cleanly without errors.
+
+3. **Browser Testing & Mobile Screenshots**
+   - Tested responsive viewports (390x844, 375x812).
+   - Captured and verified initial cinematic hero view, overlay toggle, double-tap like, single continuous scroll, photo switching, mini map embed, and sticky bottom navigation.
 
 ---
 
-## 🚀 Recommended Next Pass (Pass 1.2 or 2.0)
+## 🚀 Recommended Next Pass
 
-1. **Backend Persistence (Pass 2.0):** Implement Express API in `server/` with MongoDB/PostgreSQL for saving community gem palettes directly upon upload.
-2. **Offline Tile & Palette Caching:** Add a service worker for offline browsing of visited cities and extracted gem palettes.
+**Desktop Ambient Shell + Cinematic Gem Details**: Enhance the desktop RightPanel layout, synchronizing the ambient lighting and typography to mirror the mobile cinematic quality while preserving full desktop ergonomics.

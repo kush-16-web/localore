@@ -69,7 +69,7 @@ export default function BottomNav() {
               bg-[#E8743A] hover:bg-[#D4622A]
               flex items-center justify-center
               transition-all duration-150 active:scale-90
-              border-none shadow-lg shadow-[#E8743A]/25
+              border-none shadow-none
             "
           >
             <i className="ti ti-plus text-xl text-[#120B08]" />

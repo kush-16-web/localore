@@ -32,6 +32,7 @@ interface GemPanelContextValue {
   openPanel: (gem: UnifiedPlace) => void;
   closePanel: () => void;
   toggleUpvote: (id: string | number) => void;
+  likeGem: (id: string | number) => void;
   toggleBookmark: (id: string | number) => void;
   addGem: (draft: GemDraft) => UnifiedPlace;
   isLoadingPlaces: boolean;
@@ -49,7 +50,19 @@ export function GemPanelProvider({ children }: { children: ReactNode }) {
   // Category filter
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | number | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const gemParam = params.get("gem");
+      if (gemParam) {
+        const num = Number(gemParam);
+        return isNaN(num) ? gemParam : num;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  });
 
   // User submitted community gems persisted in localStorage
   const [communityGems, setCommunityGems] = useState<UnifiedPlace[]>(() => {
@@ -149,8 +162,26 @@ export function GemPanelProvider({ children }: { children: ReactNode }) {
 
   const selectedGem = allPlaces.find((p) => p.id === selectedId) ?? null;
 
-  const openPanel = (gem: UnifiedPlace) => setSelectedId(gem.id);
-  const closePanel = () => setSelectedId(null);
+  const openPanel = (gem: UnifiedPlace) => {
+    setSelectedId(gem.id);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("gem", String(gem.id));
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // ignore
+    }
+  };
+  const closePanel = () => {
+    setSelectedId(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("gem");
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // ignore
+    }
+  };
 
   const toggleUpvote = (id: string | number) => {
     setUpvotedIds((prev) => {
@@ -160,6 +191,23 @@ export function GemPanelProvider({ children }: { children: ReactNode }) {
       } else {
         next.add(id);
       }
+      try {
+        localStorage.setItem(
+          "localore_upvoted_ids",
+          JSON.stringify(Array.from(next))
+        );
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const likeGem = (id: string | number) => {
+    setUpvotedIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
       try {
         localStorage.setItem(
           "localore_upvoted_ids",
@@ -242,6 +290,7 @@ export function GemPanelProvider({ children }: { children: ReactNode }) {
         openPanel,
         closePanel,
         toggleUpvote,
+        likeGem,
         toggleBookmark,
         addGem,
         isLoadingPlaces,

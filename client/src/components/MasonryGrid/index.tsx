@@ -28,7 +28,7 @@ export const initialGems: GemCardData[] = [
     title: "Dumas Dark Sand Sunset",
     category: "Viewpoint",
     area: "Piplod",
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1000&q=80",
     description: "Skip the main crowded beach and head 1.5km north. There is a quiet inlet where you can see the sun dip into the Arabian Sea, painting the sky in deep purples and oranges.",
     upvotes: 320,
     author: "Pooja Patel",
@@ -461,6 +461,13 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
   const [containerHeight, setContainerHeight] = useState(0);
   const [ready, setReady] = useState(false);
 
+  const isInitialLayoutRef = useRef(true);
+
+  // When gems change (e.g. category change or navigation), reset layout animation to prevent sliding
+  useEffect(() => {
+    isInitialLayoutRef.current = true;
+  }, [gems]);
+
   const recalcLayout = useCallback(() => {
     const container = containerRef.current;
     if (!container || columns <= 0) return;
@@ -488,11 +495,17 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
     setPositions(newPositions);
     setContainerHeight(Math.max(0, ...colHeights) - gap);
     setReady(true);
+
+    const timer = setTimeout(() => {
+      isInitialLayoutRef.current = false;
+    }, 60);
+    return () => clearTimeout(timer);
   }, [gems, columns, gap]);
 
   // Switching mobile/desktop swaps the mounted card entirely — reset before remeasuring
   useEffect(() => {
     setReady(false);
+    isInitialLayoutRef.current = true;
   }, [isMobile]);
 
   useLayoutEffect(() => {
@@ -517,6 +530,8 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
     onUpvoteToggle?.(id);
   };
 
+  const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
   return (
     <div className={`w-full font-['DM_Sans',sans-serif] text-left px-3 sm:px-4 pt-4 ${isMobile ? "pb-[calc(env(safe-area-inset-bottom)+84px)]" : "pb-4"}`}>
       {gems.length === 0 ? (
@@ -536,6 +551,7 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
           {gems.map((gem) => {
             const pos = positions[gem.id];
             const CardComponent = isMobile ? MobileGemCard : DesktopGemCard;
+            const allowAnimation = !isInitialLayoutRef.current && ready && !prefersReducedMotion;
             return (
               <div
                 key={gem.id}
@@ -546,9 +562,10 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
                 className="absolute"
                 style={{
                   width: colWidth || undefined,
-                  transform: pos ? `translate(${pos.left}px, ${pos.top}px)` : "translate(-9999px, -9999px)",
-                  opacity: ready ? 1 : 0,
-                  transition: "transform 300ms ease, opacity 200ms ease",
+                  transform: pos ? `translate3d(${pos.left}px, ${pos.top}px, 0)` : undefined,
+                  visibility: ready && pos ? "visible" : "hidden",
+                  opacity: ready && pos ? 1 : 0,
+                  transition: allowAnimation ? "transform 200ms ease" : "none",
                 }}
               >
                 <CardComponent
