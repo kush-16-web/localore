@@ -20,7 +20,7 @@ export default function Sidebar() {
   const activeArea = pathname === "/map" ? params.get("area") : null;
 
   const { places } = useGemPanel();
-  const { currentLocation } = useLocationState();
+  const { currentLocation, openCityModal } = useLocationState();
   const isSurat = currentLocation.city.toLowerCase() === "surat";
 
   const displayedAreas = isSurat
@@ -73,13 +73,10 @@ export default function Sidebar() {
     <aside
       className="
         w-56 shrink-0 hidden md:flex flex-col h-full
-        backdrop-blur-xl border-r transition-colors duration-500
+        bg-[#0D0906]/60 backdrop-blur-xl
+        border-r border-[#332010]
         font-['DM_Sans',sans-serif]
       "
-      style={{
-        backgroundColor: "var(--ambient-surface, #0D0906)",
-        borderColor: "var(--ambient-border, #332010)",
-      }}
     >
       {/* ── Browse ── */}
       <nav className="px-3 pt-5">
@@ -125,9 +122,20 @@ export default function Sidebar() {
 
       {/* ── Nearby Areas ── */}
       <nav className="px-3 pt-6">
-        <p className="text-[10px] text-left font-bold tracking-[0.10em] uppercase text-[#A07050] px-2 mb-2">
-          Nearby Areas
-        </p>
+        <div className="flex items-center justify-between px-2 mb-2">
+          <p className="text-[10px] text-left font-bold tracking-[0.10em] uppercase text-[#A07050]">
+            Nearby Areas
+          </p>
+          <button
+            type="button"
+            onClick={openCityModal}
+            className="text-[10px] text-[#E8743A] hover:text-[#FFA070] transition-colors cursor-pointer flex items-center gap-1 font-medium"
+            title="Change discovery location"
+          >
+            <i className="ti ti-map-pin text-[10px]" />
+            <span>Change</span>
+          </button>
+        </div>
         <ul className="space-y-[2px] mt-2">
           {displayedAreas.map((area) => {
             const isActive = activeArea === area.label;

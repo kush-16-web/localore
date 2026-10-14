@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import MasonryGrid from "../../components/MasonryGrid";
 import ExploreHeader from "../../components/Layout/ExploreHeader";
-import CitySelectorModal from "../../components/CitySelector/CitySelectorModal";
 import { useGemPanel } from "../../context/GemPanelContext";
 import { useLocationState } from "../../context/LocationContext";
 import type { UnifiedPlace } from "../../types/place";
@@ -55,9 +54,8 @@ export default function Explore() {
     currentLocation,
     requestDeviceLocation,
     isDetectingLocation,
+    openCityModal,
   } = useLocationState();
-
-  const [cityModalOpen, setCityModalOpen] = useState(false);
 
   const isSurat = currentLocation.city.toLowerCase() === "surat";
   const query = searchQuery.trim().toLowerCase();
@@ -114,30 +112,27 @@ export default function Explore() {
       />
 
       {/* Discovery banner / Location info bar */}
-      <div
-        className="px-4 py-2 border-b flex flex-wrap items-center justify-between gap-2.5 text-xs transition-colors duration-500"
-        style={{
-          backgroundColor: "var(--ambient-surface, #140C08)",
-          borderColor: "var(--ambient-border, #261810)",
-        }}
-      >
-        <div className="flex items-center gap-2.5">
+      <div className="px-4 py-2.5 bg-[#140C08]/35 backdrop-blur-md border-b border-white/5 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-2">
           {/* Interactive location selector pill */}
           <button
             type="button"
-            onClick={() => setCityModalOpen(true)}
-            style={{
-              backgroundColor: "var(--ambient-surface-raised, #1C1410)",
-              borderColor: "var(--ambient-border, #382417)",
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-[#F5E6D0] transition-colors cursor-pointer group shadow-sm hover:border-[var(--ambient-accent,#E8743A)]"
+            onClick={openCityModal}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1C1410] hover:bg-[#281A12] border border-[#3D2A18] hover:border-[#E8743A]/60 text-[#F5E6D0] transition-all cursor-pointer group shadow-sm active:scale-95"
             title="Click to search or change city"
           >
-            <i className="ti ti-map-pin text-[var(--ambient-accent,#E8743A)] text-sm group-hover:scale-110 transition-transform" />
-            <span className="font-semibold text-xs tracking-wide">{currentLocation.displayName}</span>
-            <i className="ti ti-chevron-down text-[11px] text-[#A89080] group-hover:text-[#F5E6D0] transition-colors" />
+            <i className="ti ti-map-pin text-[#E8743A] text-sm group-hover:scale-110 transition-transform shrink-0" />
+            <strong className="font-semibold text-xs tracking-wide max-w-[170px] sm:max-w-[260px] md:max-w-none truncate text-left">
+              {currentLocation.displayName}
+            </strong>
+            {currentLocation.isLiveGps && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live device GPS" />
+            )}
+            <span className="text-[10px] text-[#E8743A] bg-[#2A180E] px-1.5 py-0.5 rounded border border-[#E8743A]/30 shrink-0 font-medium group-hover:bg-[#E8743A] group-hover:text-[#120B08] transition-colors">
+              Change ▾
+            </span>
           </button>
-          <span className="text-[#A89080] text-xs hidden sm:inline">
+          <span className="text-[#8B654A] hidden sm:inline">
             · {filteredPlaces.length} places found
           </span>
         </div>
@@ -148,10 +143,7 @@ export default function Explore() {
             <button
               onClick={() => requestDeviceLocation()}
               disabled={isDetectingLocation}
-              style={{
-                backgroundColor: "var(--ambient-accent, #E8743A)",
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[#120B08] font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-semibold text-[11px] shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <i
                 className={`ti ${
@@ -166,22 +158,10 @@ export default function Explore() {
           {isSurat && (
             <button
               onClick={() => setDemoMode(!demoMode)}
-              style={
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-all cursor-pointer ${
                 demoMode
-                  ? {
-                      borderColor: "var(--ambient-accent, #E8743A)",
-                      color: "var(--ambient-accent, #FF8D54)",
-                      backgroundColor: "var(--ambient-surface-raised, #2D180E)",
-                    }
-                  : {
-                      backgroundColor: "var(--ambient-surface-raised, #1C1410)",
-                      borderColor: "var(--ambient-border, #382417)",
-                    }
-              }
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all cursor-pointer ${
-                demoMode
-                  ? "font-medium"
-                  : "text-[#D8C7B8] hover:text-white"
+                  ? "bg-[#2A180E] border-[#E8743A]/40 text-[#E8743A]"
+                  : "bg-transparent border-[#3D2A18] text-[#8B654A] hover:text-[#C8A888]"
               }`}
             >
               <i className="ti ti-sparkles" />
@@ -194,11 +174,7 @@ export default function Explore() {
             onClick={() => refreshPlaces()}
             disabled={isLoadingPlaces}
             title="Refresh places"
-            style={{
-              backgroundColor: "var(--ambient-surface-raised, #1C1410)",
-              borderColor: "var(--ambient-border, #382417)",
-            }}
-            className="w-8 h-8 rounded-full border text-[#D8C7B8] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
+            className="w-7 h-7 rounded-full bg-[#1C1410] hover:bg-[#261A14] border border-[#3D2A18] text-[#A07050] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
           >
             <i className={`ti ti-refresh ${isLoadingPlaces ? "animate-spin" : ""}`} />
           </button>
@@ -256,11 +232,6 @@ export default function Explore() {
           />
         )}
       </div>
-
-      <CitySelectorModal
-        isOpen={cityModalOpen}
-        onClose={() => setCityModalOpen(false)}
-      />
     </div>
   );
 }

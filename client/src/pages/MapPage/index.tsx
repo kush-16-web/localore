@@ -10,7 +10,7 @@ export default function MapPage() {
   const activeArea = searchParams.get("area");
 
   const { places, selectedGem, openPanel } = useGemPanel();
-  const { currentLocation } = useLocationState();
+  const { currentLocation, openCityModal } = useLocationState();
 
   const isSurat = currentLocation.city.toLowerCase() === "surat";
 
@@ -120,6 +120,17 @@ export default function MapPage() {
         <p className="text-[10px] text-[#8B654A] mt-1">
           Tap any pin to view place details and directions.
         </p>
+        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={openCityModal}
+            className="text-[10px] text-[#E8743A] hover:text-[#FFA070] transition-colors cursor-pointer flex items-center gap-1 font-semibold"
+            title="Change city"
+          >
+            <i className="ti ti-world text-[11px]" />
+            Change City
+          </button>
+        </div>
       </div>
     </div>
   );

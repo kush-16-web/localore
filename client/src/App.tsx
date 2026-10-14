@@ -6,7 +6,6 @@ import Messages from './pages/Messages'
 import SubmitGem from './pages/SubmitGem'
 import { GemPanelProvider } from './context/GemPanelContext'
 import { LocationProvider } from './context/LocationContext'
-import { AmbientThemeProvider } from './context/AmbientThemeContext'
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router-dom'
 import './App.css'
 
@@ -15,26 +14,24 @@ function App() {
     <BrowserRouter>
       <LocationProvider>
         <GemPanelProvider>
-          <AmbientThemeProvider>
-            <Layout>
-              <Routes>
-                <Route path='/' element={<Explore />} />
-                <Route path='/map' element={<MapPage />} />
-                <Route path='/profile' element={<Profile />} />
-                <Route path='/messages' element={<Messages />} />
+        <Layout>
+          <Routes>
+            <Route path='/' element={<Explore />} />
+            <Route path='/map' element={<MapPage />} />
+            <Route path='/profile' element={<Profile />} />
+            <Route path='/messages' element={<Messages />} />
 
-                {/* Legacy pages now live as tabs inside Profile */}
-                <Route path='/my-gems' element={<Navigate to='/profile?tab=gems' replace />} />
-                <Route path='/saved-gems' element={<Navigate to='/profile?tab=saved' replace />} />
+            {/* Legacy pages now live as tabs inside Profile */}
+            <Route path='/my-gems' element={<Navigate to='/profile?tab=gems' replace />} />
+            <Route path='/saved-gems' element={<Navigate to='/profile?tab=saved' replace />} />
 
-                <Route path='/create-gem' element={<SubmitGem />} />
-                <Route path='*' element={<Navigate to='/' replace />} />
-              </Routes>
-            </Layout>
-          </AmbientThemeProvider>
-        </GemPanelProvider>
-      </LocationProvider>
-    </BrowserRouter>
+            <Route path='/create-gem' element={<SubmitGem />} />
+            <Route path='*' element={<Navigate to='/' replace />} />
+          </Routes>
+        </Layout>
+      </GemPanelProvider>
+    </LocationProvider>
+  </BrowserRouter>
   )
 }
 

@@ -13,6 +13,7 @@ import {
   getDeviceCoordinates,
   reverseGeocode,
 } from "../services/locationService";
+import CitySelectorModal from "../components/CitySelector/CitySelectorModal";
 
 interface LocationContextValue {
   currentLocation: CityLocation;
@@ -21,6 +22,9 @@ interface LocationContextValue {
   requestDeviceLocation: () => Promise<void>;
   selectCity: (location: CityLocation) => void;
   clearLocationError: () => void;
+  isCityModalOpen: boolean;
+  openCityModal: () => void;
+  closeCityModal: () => void;
 }
 
 const LocationContext = createContext<LocationContextValue | null>(null);
@@ -31,6 +35,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   );
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
 
   // Sync with localStorage
   useEffect(() => {
@@ -68,6 +73,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const openCityModal = useCallback(() => setIsCityModalOpen(true), []);
+  const closeCityModal = useCallback(() => setIsCityModalOpen(false), []);
+
   return (
     <LocationContext.Provider
       value={{
@@ -77,9 +85,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         requestDeviceLocation,
         selectCity,
         clearLocationError,
+        isCityModalOpen,
+        openCityModal,
+        closeCityModal,
       }}
     >
       {children}
+      <CitySelectorModal
+        isOpen={isCityModalOpen}
+        onClose={closeCityModal}
+      />
     </LocationContext.Provider>
   );
 }
