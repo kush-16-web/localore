@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronLeft, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from "lucide-react";
 
 interface PhotoLightboxProps {
   images: string[];
@@ -7,6 +7,7 @@ interface PhotoLightboxProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  onSelectImage?: (imgUrl: string) => void;
 }
 
 export default function PhotoLightbox({
@@ -15,19 +16,21 @@ export default function PhotoLightbox({
   isOpen,
   onClose,
   title,
+  onSelectImage,
 }: PhotoLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragY, setDragY] = useState(0);
 
-  // Touch tracking references
-  const touchStartRef = useRef<{
+  // Tracking references for gesture detection (pointer & touch)
+  const dragStartRef = useRef<{
     x: number;
     y: number;
     dist?: number;
     time: number;
   } | null>(null);
+
   const lastTapRef = useRef<{ time: number; x: number; y: number }>({
     time: 0,
     x: 0,
@@ -37,12 +40,14 @@ export default function PhotoLightbox({
   // Reset index when opened with a new initialIndex
   useEffect(() => {
     if (isOpen) {
-      setCurrentIndex(initialIndex);
+      const validIndex =
+        initialIndex >= 0 && initialIndex < images.length ? initialIndex : 0;
+      setCurrentIndex(validIndex);
       setScale(1);
       setPan({ x: 0, y: 0 });
       setDragY(0);
     }
-  }, [isOpen, initialIndex]);
+  }, [isOpen, initialIndex, images.length]);
 
   // Lock body scroll when lightbox is open
   useEffect(() => {
@@ -56,34 +61,46 @@ export default function PhotoLightbox({
     };
   }, [isOpen]);
 
+  const goToIndex = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < images.length) {
+        setCurrentIndex(index);
+        setScale(1);
+        setPan({ x: 0, y: 0 });
+        onSelectImage?.(images[index]);
+      }
+    },
+    [images, onSelectImage]
+  );
+
   const handleNext = useCallback(() => {
+    if (images.length === 0) return;
     if (currentIndex < images.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setScale(1);
-      setPan({ x: 0, y: 0 });
+      goToIndex(currentIndex + 1);
+    } else {
+      goToIndex(0);
     }
-  }, [currentIndex, images.length]);
+  }, [currentIndex, images.length, goToIndex]);
 
   const handlePrev = useCallback(() => {
+    if (images.length === 0) return;
     if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-      setScale(1);
-      setPan({ x: 0, y: 0 });
+      goToIndex(currentIndex - 1);
+    } else {
+      goToIndex(images.length - 1);
     }
-  }, [currentIndex]);
+  }, [currentIndex, images.length, goToIndex]);
 
-  // Handle double-tap to zoom in lightbox (does NOT like the gem)
+  // Double-tap to zoom in lightbox (does NOT like the gem)
   const handleDoubleTap = (clientX: number, clientY: number) => {
     if (scale > 1) {
-      // Zoom out to normal
       setScale(1);
       setPan({ x: 0, y: 0 });
     } else {
-      // Zoom in to 2.2x centered around tap point
       const newScale = 2.2;
-      const rect = window.innerWidth;
+      const rectW = window.innerWidth;
       const rectH = window.innerHeight;
-      const offsetX = (rect / 2 - clientX) * 0.8;
+      const offsetX = (rectW / 2 - clientX) * 0.8;
       const offsetY = (rectH / 2 - clientY) * 0.8;
       setScale(newScale);
       setPan({ x: offsetX, y: offsetY });
@@ -106,126 +123,89 @@ export default function PhotoLightbox({
 
   const currentImage = images[currentIndex] || images[0];
 
-  // Touch event handlers for swiping, pinch-to-zoom, and swipe-down-to-dismiss
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      // Pinch start
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const dist = Math.hypot(
-        touch1.clientX - touch2.clientX,
-        touch1.clientY - touch2.clientY
-      );
-      touchStartRef.current = {
-        x: (touch1.clientX + touch2.clientX) / 2,
-        y: (touch1.clientY + touch2.clientY) / 2,
-        dist,
-        time: Date.now(),
-      };
-    } else if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      touchStartRef.current = {
-        x: touch.clientX,
-        y: touch.clientY,
-        time: Date.now(),
-      };
-    }
+  // Pointer event handlers for swipe navigation and downward pull dismiss
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      time: Date.now(),
+    };
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragStartRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
 
-    if (e.touches.length === 2 && touchStartRef.current.dist) {
-      // Pinch to zoom
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const currentDist = Math.hypot(
-        touch1.clientX - touch2.clientX,
-        touch1.clientY - touch2.clientY
-      );
-      const ratio = currentDist / touchStartRef.current.dist;
-      const newScale = Math.min(Math.max(scale * ratio, 1), 3.5);
-      setScale(newScale);
-      touchStartRef.current.dist = currentDist;
-    } else if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      const dy = touch.clientY - touchStartRef.current.y;
-      const dx = touch.clientX - touchStartRef.current.x;
-
-      // If zoomed in: pan the image
-      if (scale > 1) {
-        setPan((prev) => ({
-          x: prev.x + dx * 0.5,
-          y: prev.y + dy * 0.5,
-        }));
-        touchStartRef.current.x = touch.clientX;
-        touchStartRef.current.y = touch.clientY;
-      } else {
-        // If not zoomed: check for downward swipe to dismiss
-        if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          setDragY(dy);
-        }
+    if (scale > 1) {
+      setPan((prev) => ({
+        x: prev.x + dx * 0.5,
+        y: prev.y + dy * 0.5,
+      }));
+      dragStartRef.current.x = e.clientX;
+      dragStartRef.current.y = e.clientY;
+    } else {
+      if (dy > 0 && Math.abs(dy) > Math.abs(dx) * 1.4) {
+        setDragY(dy);
       }
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragStartRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    const dist = Math.hypot(dx, dy);
     const now = Date.now();
 
-    if (e.changedTouches.length === 1 && scale === 1) {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartRef.current.x;
-      const dy = touch.clientY - touchStartRef.current.y;
-      const dist = Math.hypot(dx, dy);
-
-      // Check for swipe-down to dismiss
-      if (dragY > 90) {
-        onClose();
-        setDragY(0);
-        touchStartRef.current = null;
-        return;
-      }
+    // Downward swipe to dismiss
+    if (dragY > 75) {
+      onClose();
       setDragY(0);
+      dragStartRef.current = null;
+      return;
+    }
+    setDragY(0);
 
-      // Horizontal swipe between photos
-      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx < 0) {
-          handleNext();
-        } else {
-          handlePrev();
-        }
-        touchStartRef.current = null;
-        return;
+    // Horizontal swipe between photos
+    if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      if (dx < 0) {
+        handleNext();
+      } else {
+        handlePrev();
       }
+      dragStartRef.current = null;
+      return;
+    }
 
-      // Check double tap to zoom in lightbox
-      if (dist < 15) {
-        const timeSince = now - lastTapRef.current.time;
-        const tapDist = Math.hypot(
-          touch.clientX - lastTapRef.current.x,
-          touch.clientY - lastTapRef.current.y
-        );
-        if (timeSince < 300 && tapDist < 40) {
-          lastTapRef.current = { time: 0, x: 0, y: 0 };
-          handleDoubleTap(touch.clientX, touch.clientY);
-        } else {
-          lastTapRef.current = {
-            time: now,
-            x: touch.clientX,
-            y: touch.clientY,
-          };
-        }
+    // Double tap to zoom
+    if (dist < 12) {
+      const timeSince = now - lastTapRef.current.time;
+      const tapDist = Math.hypot(
+        e.clientX - lastTapRef.current.x,
+        e.clientY - lastTapRef.current.y
+      );
+      if (timeSince < 300 && tapDist < 35) {
+        lastTapRef.current = { time: 0, x: 0, y: 0 };
+        handleDoubleTap(e.clientX, e.clientY);
+      } else {
+        lastTapRef.current = {
+          time: now,
+          x: e.clientX,
+          y: e.clientY,
+        };
       }
     }
 
     setDragY(0);
-    touchStartRef.current = null;
+    dragStartRef.current = null;
   };
 
   const handleClose = (e?: React.MouseEvent | React.TouchEvent) => {
     if (e) {
       e.stopPropagation();
+      e.preventDefault();
     }
     onClose();
   };
@@ -236,18 +216,22 @@ export default function PhotoLightbox({
       aria-modal="true"
       aria-label={`Original photo view of ${title}`}
       onClick={(e) => e.stopPropagation()}
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[1000] bg-black flex flex-col select-none overflow-hidden touch-none"
       style={{
         transform: dragY > 0 ? `translateY(${dragY}px)` : "none",
         opacity: dragY > 0 ? Math.max(0.3, 1 - dragY / 300) : 1,
-        transition: dragY === 0 ? "transform 250ms ease, opacity 250ms ease" : "none",
+        transition:
+          dragY === 0 ? "transform 250ms ease, opacity 250ms ease" : "none",
       }}
     >
       {/* ── Top Navigation Bar ──────────────────────────────────────────────── */}
-      <header className="relative z-30 px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
+      <header className="relative z-40 px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 flex items-center justify-between bg-gradient-to-b from-black/90 to-transparent">
         <button
           type="button"
           onClick={handleClose}
+          onPointerDown={(e) => e.stopPropagation()}
           aria-label="Close original photo view"
           className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
         >
@@ -272,6 +256,7 @@ export default function PhotoLightbox({
               e.stopPropagation();
               handleDoubleTap(window.innerWidth / 2, window.innerHeight / 2);
             }}
+            onPointerDown={(e) => e.stopPropagation()}
             aria-label={scale > 1 ? "Zoom out" : "Zoom in"}
             className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
           >
@@ -280,6 +265,7 @@ export default function PhotoLightbox({
           <button
             type="button"
             onClick={handleClose}
+            onPointerDown={(e) => e.stopPropagation()}
             aria-label="Close"
             className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
           >
@@ -288,50 +274,108 @@ export default function PhotoLightbox({
         </div>
       </header>
 
-      {/* ── Main Photo Container (Original uncropped aspect ratio) ──────────── */}
+      {/* ── Main Photo Container with Visible Next & Prev Navigation Buttons ── */}
       <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         className="flex-1 w-full h-full flex items-center justify-center p-2 relative overflow-hidden"
       >
+        {/* Previous Image Arrow Button */}
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Previous photo"
+            className="absolute left-3 z-50 grid h-12 w-12 place-items-center rounded-full bg-black/75 text-white ring-2 ring-white/30 hover:bg-black/95 hover:scale-105 active:scale-90 transition-all cursor-pointer shadow-2xl pointer-events-auto"
+          >
+            <ChevronLeft size={26} className="stroke-[2.5]" />
+          </button>
+        )}
+
+        {/* Main Image with uncropped aspect ratio */}
         <img
+          key={currentIndex}
           src={currentImage}
           alt={`${title} - Photo ${currentIndex + 1}`}
           className="max-h-full max-w-full object-contain pointer-events-none transition-transform will-change-transform"
           style={{
             transform: `scale(${scale}) translate(${pan.x / scale}px, ${pan.y / scale}px)`,
-            transition: scale === 1 ? "transform 250ms cubic-bezier(0.16, 1, 0.3, 1)" : "none",
+            transition:
+              scale === 1
+                ? "transform 250ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease"
+                : "none",
           }}
         />
+
+        {/* Next Image Arrow Button */}
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Next photo"
+            className="absolute right-3 z-50 grid h-12 w-12 place-items-center rounded-full bg-black/75 text-white ring-2 ring-white/30 hover:bg-black/95 hover:scale-105 active:scale-90 transition-all cursor-pointer shadow-2xl pointer-events-auto"
+          >
+            <ChevronRight size={26} className="stroke-[2.5]" />
+          </button>
+        )}
       </div>
 
-      {/* ── Bottom Dot Indicators & Swipe Hint ─────────────────────────────── */}
-      <footer className="relative z-30 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-2 flex flex-col items-center gap-2 bg-gradient-to-t from-black/80 to-transparent">
-        {/* Dot Indicators */}
-        <div className="flex items-center gap-2">
-          {images.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setCurrentIndex(idx);
-                setScale(1);
-                setPan({ x: 0, y: 0 });
-              }}
-              aria-label={`Go to photo ${idx + 1}`}
-              className={`h-2 rounded-full transition-all cursor-pointer ${
-                idx === currentIndex
-                  ? "w-6 bg-[#E8743A]"
-                  : "w-2 bg-white/30 hover:bg-white/60"
-              }`}
-            />
-          ))}
+      {/* ── Bottom Filmstrip Thumbnail Strip & Indicators ──────────────────── */}
+      <footer className="relative z-40 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-2 px-4 flex flex-col items-center gap-2.5 bg-gradient-to-t from-black/90 to-transparent">
+        {/* Filmstrip Thumbnails Row (Tap to switch image) */}
+        <div className="flex items-center justify-center gap-2.5 w-full max-w-sm mx-auto overflow-x-auto py-1 px-2 scrollbar-none">
+          {images.map((thumbUrl, idx) => {
+            const isActive = idx === currentIndex;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToIndex(idx);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label={`View photo ${idx + 1}`}
+                className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all cursor-pointer group active:scale-95 ${
+                  isActive
+                    ? "border-[#E8743A] ring-2 ring-[#E8743A]/60 scale-105 shadow-xl opacity-100"
+                    : "border-white/20 opacity-55 hover:opacity-90"
+                }`}
+              >
+                <img
+                  src={thumbUrl}
+                  alt={`Thumb ${idx + 1}`}
+                  className="h-full w-full object-cover pointer-events-none group-hover:scale-105 transition-transform"
+                />
+                <span
+                  className={`absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    isActive
+                      ? "bg-[#E8743A] text-[#120B08]"
+                      : "bg-black/60 text-white/80"
+                  }`}
+                >
+                  {idx + 1}
+                </span>
+              </button>
+            );
+          })}
         </div>
+
         <span className="text-[10px] text-white/50 tracking-wider">
-          Swipe down to exit · Double tap to zoom
+          Tap arrows or thumbnails to switch · Double tap to zoom
         </span>
       </footer>
     </div>
   );
 }
+

@@ -81,6 +81,40 @@ const DEFAULT_ALTERNATES = [
   "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
 ];
 
+const CURATED_FALLBACKS = [
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1544967082-d9d25d867d66?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1000&q=80",
+];
+
+function getDistinctThumbnails(heroImage: string, category: string): string[] {
+  const result: string[] = [heroImage];
+  const extractId = (url: string) => {
+    const match = url.match(/photo-([0-9a-zA-Z-]+)/);
+    return match ? match[1] : url;
+  };
+  const heroId = extractId(heroImage);
+
+  const candidates = [
+    ...(CATEGORY_ALTERNATES[category] ?? DEFAULT_ALTERNATES),
+    ...CURATED_FALLBACKS,
+  ];
+
+  for (const cand of candidates) {
+    const candId = extractId(cand);
+    const isDup = result.some((r) => extractId(r) === candId);
+    if (!isDup && candId !== heroId) {
+      result.push(cand);
+    }
+    if (result.length >= 3) break;
+  }
+  return result;
+}
+
 interface HeartAnimState {
   id: number;
   x: number;
@@ -100,16 +134,6 @@ export default function MobileGemSheet({
   accent,
   accentSoft,
 }: MobileGemSheetProps) {
-  const isExpandedQuery =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("expand") === "1";
-
-  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(
-    isExpandedQuery ? 1 : "480px"
-  );
-  const isExpanded =
-    activeSnapPoint === 1 || activeSnapPoint === "1" || activeSnapPoint === 0.94;
-
   const [prevGemId, setPrevGemId] = useState<string | number | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -117,6 +141,11 @@ export default function MobileGemSheet({
   const [heartAnim, setHeartAnim] = useState<HeartAnimState | null>(null);
   const [isLikeBouncing, setIsLikeBouncing] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  // Top handle pull-to-dismiss state
+  const [handleDragY, setHandleDragY] = useState(0);
+  const handleTouchStartRef = useRef<{ y: number; time: number } | null>(null);
 
   // Lightbox state for true original uncropped photo view
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -148,17 +177,11 @@ export default function MobileGemSheet({
     setIsDescriptionExpanded(false);
     setIsLightboxOpen(false);
     setScrollY(0);
-    setActiveSnapPoint(isExpandedQuery ? 1 : "480px");
+    setHasScrolled(false);
+    setHandleDragY(0);
   }
 
   const activeImage = selectedImage ?? gem?.image ?? "";
-
-  // Reset snap point when opened
-  useEffect(() => {
-    if (isOpen && gem) {
-      setActiveSnapPoint(isExpandedQuery ? 1 : "480px");
-    }
-  }, [isOpen, gem?.id, isExpandedQuery]);
 
   // Clean up timers on unmount
   useEffect(() => {
@@ -204,13 +227,15 @@ export default function MobileGemSheet({
   const distanceText =
     gem.distanceKm !== undefined ? formatDistance(gem.distanceKm) : null;
 
-  // Build thumbnails: primary image + curated category photos
-  const alternates =
-    CATEGORY_ALTERNATES[gem.category] ?? DEFAULT_ALTERNATES;
-  const thumbnails = [gem.image, alternates[0], alternates[1]];
+  // Build distinct thumbnails: primary image + curated category photos (guaranteed 3 unique)
+  const thumbnails = getDistinctThumbnails(gem.image, gem.category);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollY(e.currentTarget.scrollTop);
+    const currentScroll = e.currentTarget.scrollTop;
+    setScrollY(currentScroll);
+    if (currentScroll > 5 && !hasScrolled) {
+      setHasScrolled(true);
+    }
   };
 
   // ── Trigger Double-Tap Like & Smooth Heart Animation ──────────────────────
@@ -319,15 +344,15 @@ export default function MobileGemSheet({
     <>
       <Drawer.Root
         open={isOpen}
-        onOpenChange={(open) => !open && onClose()}
-        snapPoints={["480px", 1]}
-        activeSnapPoint={activeSnapPoint}
-        setActiveSnapPoint={setActiveSnapPoint}
-        fadeFromIndex={0}
+        onOpenChange={(open) => {
+          if (isLightboxOpen) return;
+          if (!open) onClose();
+        }}
         shouldScaleBackground={false}
         noBodyStyles={true}
         disablePreventScroll={true}
-        closeThreshold={0.25}
+        dismissible={true}
+        closeThreshold={0.2}
       >
         <Drawer.Portal>
           {/* Backdrop with smooth blur and fade */}
@@ -337,15 +362,23 @@ export default function MobileGemSheet({
             Mobile bottom sheet:
             - rounded-t-[32px] permanent rounded top corners
             - overflow-hidden clips hero image directly under rounded corners (NO brown header bar!)
-            - snapPoints: 480px peek state, drag up to expand to 100%, drag down to close
+            - h-[92dvh] leaves ~8-10% gap from top for backdrop and rounded sheet experience
           */}
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-[999] md:hidden
-              h-[94dvh] outline-none rounded-t-[32px] border-t border-white/12
+              h-[92dvh] outline-none rounded-t-[32px] border-t border-white/12
               shadow-[0_-20px_60px_rgba(0,0,0,0.85)]
               flex flex-col overflow-hidden
               bg-[#120B08] font-['DM_Sans',sans-serif] select-none"
-            style={{ left: 0, right: 0, width: "100%", maxWidth: "100vw" }}
+            style={{
+              left: 0,
+              right: 0,
+              width: "100%",
+              maxWidth: "100vw",
+              transform:
+                handleDragY > 0 ? `translateY(${handleDragY}px)` : undefined,
+              transition: handleDragY === 0 ? "transform 200ms ease" : "none",
+            }}
           >
             <style>{`
               @keyframes mobileHeartPopSmooth {
@@ -361,8 +394,8 @@ export default function MobileGemSheet({
                 100% { transform: scale(1); }
               }
               @keyframes mobileScrollBounce {
-                0%, 100% { transform: translateY(0); opacity: 0.65; }
-                50% { transform: translateY(4px); opacity: 1; }
+                0%, 100% { transform: translateY(0); opacity: 0.5; }
+                50% { transform: translateY(4px); opacity: 0.9; }
               }
               .anim-heart-pop-smooth {
                 animation: mobileHeartPopSmooth 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -386,15 +419,33 @@ export default function MobileGemSheet({
               {gem.description}
             </Drawer.Description>
 
-            {/* ── Top Drag Handle Floating Directly Over the Photograph ──────── */}
+            {/* ── Top Drag Handle Bar (Draggable down to close) ────────────────── */}
             <div
-              onClick={() =>
-                setActiveSnapPoint((prev) => (prev === "480px" ? 1 : "480px"))
-              }
-              className="absolute top-2.5 inset-x-0 z-40 flex justify-center cursor-grab active:cursor-grabbing pointer-events-auto"
-              title="Drag or tap to expand/collapse"
+              onTouchStart={(e) => {
+                handleTouchStartRef.current = {
+                  y: e.touches[0].clientY,
+                  time: Date.now(),
+                };
+              }}
+              onTouchMove={(e) => {
+                if (!handleTouchStartRef.current) return;
+                const dy = e.touches[0].clientY - handleTouchStartRef.current.y;
+                if (dy > 0) {
+                  setHandleDragY(dy);
+                }
+              }}
+              onTouchEnd={() => {
+                if (!handleTouchStartRef.current) return;
+                if (handleDragY > 65) {
+                  onClose();
+                }
+                setHandleDragY(0);
+                handleTouchStartRef.current = null;
+              }}
+              className="absolute top-2 inset-x-0 z-50 flex justify-center py-2.5 cursor-grab active:cursor-grabbing pointer-events-auto touch-none"
+              title="Drag down to close"
             >
-              <div className="h-1.5 w-12 rounded-full bg-white/40 shadow-sm" />
+              <Drawer.Handle className="h-1.5 w-12 rounded-full bg-white/45 shadow-sm" />
             </div>
 
             {/* ── Floating Header Navigation Icons directly over the Photograph ── */}
@@ -621,15 +672,13 @@ export default function MobileGemSheet({
                     </div>
                   </div>
 
-                  {/* Scroll Down Indicator (Fades out permanently once user scrolls or expands) */}
-                  <div
-                    className={`flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full transition-opacity duration-300 ${
-                      scrollY > 15 || isExpanded ? "opacity-0" : "opacity-100"
-                    }`}
-                  >
-                    <span>Scroll for details</span>
-                    <ChevronDown size={14} className="stroke-[2.5]" />
-                  </div>
+                  {/* Scroll Down Indicator (Unmounted completely once user scrolls) */}
+                  {!hasScrolled && scrollY < 5 && (
+                    <div className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full">
+                      <span>Scroll for details</span>
+                      <ChevronDown size={14} className="stroke-[2.5]" />
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -796,17 +845,18 @@ export default function MobileGemSheet({
               </div>
             </footer>
           </Drawer.Content>
+
+          {/* ── Fullscreen Uncropped Photo Lightbox inside Portal ───────────── */}
+          <PhotoLightbox
+            images={thumbnails}
+            initialIndex={lightboxInitialIndex}
+            isOpen={isLightboxOpen}
+            onClose={() => setIsLightboxOpen(false)}
+            title={gem.title}
+            onSelectImage={(img) => setSelectedImage(img)}
+          />
         </Drawer.Portal>
       </Drawer.Root>
-
-      {/* ── Fullscreen Uncropped Photo Lightbox ──────────────────────────────── */}
-      <PhotoLightbox
-        images={thumbnails}
-        initialIndex={lightboxInitialIndex}
-        isOpen={isLightboxOpen}
-        onClose={() => setIsLightboxOpen(false)}
-        title={gem.title}
-      />
     </>
   );
 }

@@ -1,4 +1,4 @@
-# LOCALORE — MOBILE PASS 1.3: CINEMATIC MOTION REPAIR & INTERACTION POLISH
+# LOCALORE — MOBILE PASS 1.4: DRAG-TO-DISMISS, SCROLL HINT REPAIR & LIGHTBOX PHOTO SWITCHING
 
 **Date:** October 14, 2026  
 **Status:** Completed & Tested  
@@ -8,13 +8,17 @@
 
 ## 📋 Summary of Completed Work
 
-In Pass 1.3, the mobile Gem Details experience was refined to resolve motion and layout regressions:
-- **Smooth Rounded-Panel Opening (Vaul Drawer):** Reintegrated `vaul` drawer container to provide physics-based spring slide-up entrance animation and fluid pull-to-dismiss dragging.
-- **Permanent Rounded Corners:** `rounded-t-[32px]` top corners remain visible and clipped (`overflow-hidden`) across opening, scrolling, dragging, and closing.
-- **Scoped Hero Parallax & Solid Surface:** Parallax is strictly scoped to the hero region (`translateY(${-scrollY * 0.3}px)`). Below the hero, description, gallery, and map render on a solid, readable espresso surface (`bg-[#120B08]`), ensuring the hero photo does not bleed behind content.
-- **Clean Filled Heart Animation:** Replaced the dark, thick-outlined heart with a clean, filled SVG heart in the image's dynamic ColorThief accent color, featuring soft contrast drop-shadow, playful scale-pop, and smooth flight to counter.
-- **Inline Read More / Read Less:** Truncated description renders the toggle inline (`inline-block ml-1.5`) without extra line breaks, expanding smoothly with zero layout jumps.
-- **Clean View & Uncropped Lightbox:** Single-tap clean view hides all gradients, overlays, and the sticky button. Tapping the expand icon opens the dedicated uncropped fullscreen lightbox.
+In Pass 1.4, all mobile sheet drag, dismissal, scroll indicator, and photo switching behaviors were perfected:
+- **Draggable Bottom Sheet & 8-10% Top Gap:** Sheet opens to `h-[92dvh]` (~8-10% gap from the top of the mobile screen), displaying top rounded corners (`rounded-t-[32px]`) and the blurred backdrop overlay behind it.
+- **Physics Drag-to-Dismiss & Handle Drag:** Removed rigid `snapPoints={["480px", 1]}` that trapped the drawer at half-screen and prevented downward swipe dismissal. Integrated `<Drawer.Handle />` with touch drag tracking (`handleDragY`), enabling natural downward dragging to close the sheet directly.
+- **Permanent "Scroll for Details" Unmount:** Added `hasScrolled` state. Once the user scrolls down by even 5px (`!hasScrolled && scrollY < 5`), the indicator completely unmounts from the DOM, permanently preventing recurring keyframe pop-ups.
+- **True Uncropped Lightbox Photo Switching:**
+  - Added on-screen `ChevronLeft` and `ChevronRight` navigation buttons with pointer events for both mouse and touch.
+  - Added interactive, numbered filmstrip thumbnail switcher at the bottom with real-time active indicators.
+  - Implemented `getDistinctThumbnails(gem.image, gem.category)` to guarantee 3 unique, non-duplicating photos for every gem.
+  - Synchronized `onSelectImage` prop back to `MobileGemSheet` so changing photos in the lightbox updates the sheet's active hero image.
+- **Event Isolation & Non-Bubbling Lightbox Close:** Nested `PhotoLightbox` inside `Drawer.Portal`, guarded `Drawer.Root`'s `onOpenChange` against `isLightboxOpen`, and added `stopPropagation` on pointer down. Closing the lightbox now strictly closes the lightbox while preserving the underlying Gem Details view.
+
 
 ---
 
