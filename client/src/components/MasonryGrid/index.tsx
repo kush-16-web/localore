@@ -1,22 +1,9 @@
-// MasonryGrid Component — real Pinterest-style masonry (JS-positioned)
 import React, { useState, useRef, useLayoutEffect, useCallback, useEffect } from "react";
+import { formatDistance } from "../../utils/geo";
 
-export interface GemCardData {
-  id: number;
-  title: string;
-  category: string;
-  area: string;
-  image: string;
-  description: string;
-  tags?: string[];
-  upvotes: number;
-  author: string;
-  authorInitials: string;
-  hours: string;
-  isBookmarked: boolean;
-  isUpvoted: boolean;
-  aspectRatio: string;
-}
+import type { UnifiedPlace } from "../../types/place";
+
+export type GemCardData = UnifiedPlace;
 
 export const initialGems: GemCardData[] = [
   {
@@ -32,7 +19,9 @@ export const initialGems: GemCardData[] = [
     hours: "6 PM - 11:50 PM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[3/4]"
+    aspectRatio: "aspect-[3/4]",
+    source: "demo",
+    coordinates: { lat: 21.2052, lng: 72.8023 },
   },
   {
     id: 2,
@@ -47,7 +36,9 @@ export const initialGems: GemCardData[] = [
     hours: "Open 24/7",
     isBookmarked: true,
     isUpvoted: true,
-    aspectRatio: "aspect-[16/9]"
+    aspectRatio: "aspect-[16/9]",
+    source: "demo",
+    coordinates: { lat: 21.1352, lng: 72.7154 },
   },
   {
     id: 3,
@@ -62,7 +53,9 @@ export const initialGems: GemCardData[] = [
     hours: "9 AM - 6 PM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[4/5]"
+    aspectRatio: "aspect-[4/5]",
+    source: "demo",
+    coordinates: { lat: 21.1923, lng: 72.8188 },
   },
   {
     id: 4,
@@ -77,7 +70,9 @@ export const initialGems: GemCardData[] = [
     hours: "6 AM - 10 AM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[3/2]"
+    aspectRatio: "aspect-[3/2]",
+    source: "demo",
+    coordinates: { lat: 21.1856, lng: 72.8423 },
   },
   {
     id: 5,
@@ -92,7 +87,9 @@ export const initialGems: GemCardData[] = [
     hours: "7 AM - 5 PM",
     isBookmarked: true,
     isUpvoted: false,
-    aspectRatio: "aspect-square"
+    aspectRatio: "aspect-square",
+    source: "demo",
+    coordinates: { lat: 21.1524, lng: 72.7752 },
   },
   {
     id: 6,
@@ -107,7 +104,9 @@ export const initialGems: GemCardData[] = [
     hours: "7 AM - 1 PM",
     isBookmarked: false,
     isUpvoted: true,
-    aspectRatio: "aspect-[4/3]"
+    aspectRatio: "aspect-[4/3]",
+    source: "demo",
+    coordinates: { lat: 21.1965, lng: 72.8211 },
   },
   {
     id: 7,
@@ -122,7 +121,9 @@ export const initialGems: GemCardData[] = [
     hours: "10 AM - 5 PM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[3/4]"
+    aspectRatio: "aspect-[3/4]",
+    source: "demo",
+    coordinates: { lat: 21.1982, lng: 72.8194 },
   },
   {
     id: 8,
@@ -137,7 +138,9 @@ export const initialGems: GemCardData[] = [
     hours: "Open 24/7",
     isBookmarked: true,
     isUpvoted: false,
-    aspectRatio: "aspect-[16/10]"
+    aspectRatio: "aspect-[16/10]",
+    source: "demo",
+    coordinates: { lat: 21.1932, lng: 72.7981 },
   },
   {
     id: 9,
@@ -152,7 +155,9 @@ export const initialGems: GemCardData[] = [
     hours: "6 AM - 7 PM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[4/5]"
+    aspectRatio: "aspect-[4/5]",
+    source: "demo",
+    coordinates: { lat: 21.1685, lng: 72.7445 },
   },
   {
     id: 10,
@@ -167,7 +172,9 @@ export const initialGems: GemCardData[] = [
     hours: "5 PM - 7 PM",
     isBookmarked: false,
     isUpvoted: false,
-    aspectRatio: "aspect-[3/4]"
+    aspectRatio: "aspect-[3/4]",
+    source: "demo",
+    coordinates: { lat: 21.1554, lng: 72.7782 },
   },
   {
     id: 11,
@@ -182,7 +189,9 @@ export const initialGems: GemCardData[] = [
     hours: "11 AM - 4 PM",
     isBookmarked: true,
     isUpvoted: false,
-    aspectRatio: "aspect-square"
+    aspectRatio: "aspect-square",
+    source: "demo",
+    coordinates: { lat: 21.1685, lng: 72.7845 },
   }
 ];
 
@@ -191,8 +200,8 @@ type MasonryGridProps = {
   emptyMessage?: string;
   emptyHint?: string;
   onGemSelect?: (gem: GemCardData) => void;
-  onBookmarkToggle?: (id: number) => void;
-  onUpvoteToggle?: (id: number) => void;
+  onBookmarkToggle?: (id: string | number) => void;
+  onUpvoteToggle?: (id: string | number) => void;
 };
 
 const GAP_MOBILE = 12; // tighter gap on phone — matches app-style feeds
@@ -279,10 +288,24 @@ function MobileGemCard({
           <i className={`ti ${gem.isBookmarked ? "ti-bookmark-filled" : "ti-bookmark"}`} />
         </button>
 
-        <span className="absolute bottom-2 left-2 bg-[#110C08]/50 backdrop-blur-md text-[#F5E6D0] text-[9px] font-medium px-2 py-[3px] rounded-md z-20 flex items-center gap-1">
-          <i className="ti ti-map-pin text-[10px]" />
-          {gem.area}
+        <span className="absolute bottom-2 left-2 bg-[#110C08]/65 backdrop-blur-md text-[#F5E6D0] text-[9px] font-medium px-2 py-[3px] rounded-md z-20 flex items-center gap-1">
+          <i className="ti ti-map-pin text-[10px] text-[#E8743A]" />
+          <span>{gem.area}</span>
+          {gem.distanceKm !== undefined && (
+            <span className="text-[#E8743A] font-semibold">· {formatDistance(gem.distanceKm)}</span>
+          )}
         </span>
+
+        {gem.source === "osm" && (
+          <span className="absolute bottom-2 right-2 bg-emerald-950/70 border border-emerald-500/30 text-emerald-300 text-[8px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-md z-20">
+            OSM
+          </span>
+        )}
+        {gem.source === "demo" && (
+          <span className="absolute bottom-2 right-2 bg-amber-950/70 border border-amber-500/30 text-amber-300 text-[8px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-md z-20">
+            Demo
+          </span>
+        )}
       </div>
 
       <div className="p-2.5 flex flex-col gap-1.5">
@@ -349,6 +372,24 @@ function DesktopGemCard({
           <i className="ti ti-map-pin text-[11px]" />
           {gem.area}
         </span>
+
+        {gem.distanceKm !== undefined && (
+          <span className="absolute bottom-3 left-3 bg-[#110C08]/75 backdrop-blur-md text-[#E8743A] text-[11px] font-semibold px-2 py-0.5 rounded-md z-20 flex items-center gap-1 border border-[#E8743A]/30">
+            <i className="ti ti-map-pin text-[10px]" />
+            {formatDistance(gem.distanceKm)}
+          </span>
+        )}
+
+        {gem.source === "osm" && (
+          <span className="absolute bottom-3 right-3 bg-[#110C08]/75 backdrop-blur-md text-emerald-400 text-[10px] font-medium px-2 py-0.5 rounded-md z-20 border border-emerald-500/30">
+            OpenStreetMap
+          </span>
+        )}
+        {gem.source === "demo" && (
+          <span className="absolute bottom-3 right-3 bg-[#110C08]/75 backdrop-blur-md text-amber-400 text-[10px] font-medium px-2 py-0.5 rounded-md z-20 border border-amber-500/30">
+            Surat Demo
+          </span>
+        )}
       </div>
 
       <div className="p-4.5 flex flex-col gap-3 flex-1">
@@ -410,13 +451,13 @@ function DesktopGemCard({
 
 export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect, onBookmarkToggle, onUpvoteToggle }: MasonryGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const itemRefs = useRef<Map<string | number, HTMLDivElement>>(new Map());
   const isMobile = useIsMobile();
   const columns = useColumnCount(containerRef, isMobile);
   const gap = isMobile ? GAP_MOBILE : GAP_DESKTOP;
 
   const [colWidth, setColWidth] = useState(0);
-  const [positions, setPositions] = useState<Record<number, { top: number; left: number }>>({});
+  const [positions, setPositions] = useState<Record<string | number, { top: number; left: number }>>({});
   const [containerHeight, setContainerHeight] = useState(0);
   const [ready, setReady] = useState(false);
 
@@ -427,7 +468,7 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
     const containerWidth = container.offsetWidth;
     const width = (containerWidth - gap * (columns - 1)) / columns;
     const colHeights = new Array(columns).fill(0);
-    const newPositions: Record<number, { top: number; left: number }> = {};
+    const newPositions: Record<string | number, { top: number; left: number }> = {};
 
     gems.forEach((gem) => {
       const el = itemRefs.current.get(gem.id);
@@ -466,12 +507,12 @@ export default function MasonryGrid({ gems, emptyMessage, emptyHint, onGemSelect
     return () => ro.disconnect();
   }, [recalcLayout]);
 
-  const handleBookmark = (id: number, e: React.MouseEvent) => {
+  const handleBookmark = (id: string | number, e: React.MouseEvent) => {
     e.stopPropagation();
     onBookmarkToggle?.(id);
   };
 
-  const handleUpvote = (id: number, e: React.MouseEvent) => {
+  const handleUpvote = (id: string | number, e: React.MouseEvent) => {
     e.stopPropagation();
     onUpvoteToggle?.(id);
   };

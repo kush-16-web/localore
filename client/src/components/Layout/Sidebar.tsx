@@ -1,5 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { AREAS } from "../../data/constants";
+import { useGemPanel } from "../../context/GemPanelContext";
+import { useLocationState } from "../../context/LocationContext";
 
 type NavItem = {
   label: string;
@@ -9,14 +11,32 @@ type NavItem = {
   isActive: (pathname: string, tab: string | null) => boolean;
 };
 
+const AREA_COLORS = ["#E8743A", "#7AB648", "#F5C842", "#9B8FCC", "#2ABFCC", "#E05D5D"];
+
 export default function Sidebar() {
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
   const tab = params.get("tab");
-  // Active area is owned by the URL (set by MapPage / trail chips) —
-  // never by local state, so sidebar, map and profile stay in sync.
-  // When AREAS becomes live-location data, only the list source changes.
   const activeArea = pathname === "/map" ? params.get("area") : null;
+
+  const { places } = useGemPanel();
+  const { currentLocation } = useLocationState();
+  const isSurat = currentLocation.city.toLowerCase() === "surat";
+
+  const displayedAreas = isSurat
+    ? AREAS.map((a) => ({ label: a.label, color: a.color }))
+    : Array.from(
+        new Set(
+          places
+            .map((p) => p.area)
+            .filter((a) => a && a !== "Local Spot")
+        )
+      )
+        .slice(0, 6)
+        .map((label, idx) => ({
+          label,
+          color: AREA_COLORS[idx % AREA_COLORS.length],
+        }));
 
   const browseItems: NavItem[] = [
     {
@@ -106,7 +126,7 @@ export default function Sidebar() {
           Nearby Areas
         </p>
         <ul className="space-y-[2px] mt-2">
-          {AREAS.map((area) => {
+          {displayedAreas.map((area) => {
             const isActive = activeArea === area.label;
             return (
               <li key={area.label}>

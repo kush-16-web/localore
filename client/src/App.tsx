@@ -5,13 +5,15 @@ import MapPage from './pages/MapPage'
 import Messages from './pages/Messages'
 import SubmitGem from './pages/SubmitGem'
 import { GemPanelProvider } from './context/GemPanelContext'
+import { LocationProvider } from './context/LocationContext'
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router-dom'
 import './App.css'
 
 function App() {
   return (
     <BrowserRouter>
-      <GemPanelProvider>
+      <LocationProvider>
+        <GemPanelProvider>
         <Layout>
           <Routes>
             <Route path='/' element={<Explore />} />
@@ -28,7 +30,8 @@ function App() {
           </Routes>
         </Layout>
       </GemPanelProvider>
-    </BrowserRouter>
+    </LocationProvider>
+  </BrowserRouter>
   )
 }
 

@@ -4,8 +4,12 @@ import { useState,useEffect , useRef} from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png"
 import { useGemPanel } from "../../context/GemPanelContext";
+import { useLocationState } from "../../context/LocationContext";
+import CitySelectorModal from "../CitySelector/CitySelectorModal";
 
 export default function Header() {
+  const { currentLocation } = useLocationState();
+  const [cityModalOpen, setCityModalOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -116,14 +120,32 @@ export default function Header() {
         font-['DM_Sans',sans-serif]
       "
     >
-        <div className="flex items-center gap-4">
-          <img src={logo} alt="Logo" className="w-10 h-10" />
-          <span
-            className="text-[20px] hidden md:block  font-semibold text-[#F5E6D0] tracking-wide"
-            style={{ fontFamily: "'Syne', sans-serif" }}
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 no-underline">
+            <img src={logo} alt="Logo" className="w-10 h-10" />
+            <span
+              className="text-[20px] hidden md:block font-semibold text-[#F5E6D0] tracking-wide"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Localore
+            </span>
+          </Link>
+
+          {/* Compact current-city selector */}
+          <button
+            onClick={() => setCityModalOpen(true)}
+            aria-label="Change discovery location"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#1C1410] hover:bg-[#261A14] border border-[#3D2A18] hover:border-[#E8743A]/50 text-[#F5E6D0] text-xs transition-all cursor-pointer shadow-sm"
           >
-            Localore
-          </span>
+            <i className="ti ti-map-pin text-[#E8743A] text-sm shrink-0" />
+            <span className="font-medium text-[11px] md:text-xs max-w-[90px] sm:max-w-[130px] md:max-w-[170px] truncate text-left">
+              {currentLocation.city}
+            </span>
+            {currentLocation.isLiveGps && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live device GPS" />
+            )}
+            <i className="ti ti-chevron-down text-[10px] text-[#A07050] shrink-0" />
+          </button>
         </div>
       {/* ── Search bar — hidden on profile ── */}
       {showSearch && (
@@ -295,6 +317,11 @@ export default function Header() {
         </Link>
 
       </div>
+
+      <CitySelectorModal
+        isOpen={cityModalOpen}
+        onClose={() => setCityModalOpen(false)}
+      />
     </header>
   );
 }

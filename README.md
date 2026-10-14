@@ -1,131 +1,121 @@
-# Localore — Local Discovery Platform
+# Localore — Worldwide Location-First Discovery Platform
 
-Localore is a React-based web application that helps users discover hidden gems in their city through a visually immersive, map-aware interface. It is built as a **Single Page Application (SPA)** with a dedicated **Admin Panel** for content management and robust user authentication.
+Localore is a React 19 + TypeScript + Vite + Tailwind CSS web application that empowers users anywhere in the world to discover local spots, hidden gems, and cultural landmarks through an immersive, map-aware interface.
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v20.x or later)
+- Node.js (v20.x or v22.x)
 - npm
 
-### Installation
+### Installation & Run
 
-1. **Clone the repository** (or download the source code)
+1. **Install dependencies for the client**
    ```bash
-   git clone https://github.com/yourusername/localore.git
-   cd localore
-   ```
-
-2. **Install dependencies for both the client and server**
-   ```bash
-   # Client-side dependencies (React app)
    cd client
-   npm install
-
-   # Server-side dependencies (Node.js/Express)
-   cd ../server
    npm install
    ```
 
-### Running the Application
-
-Start both the client and server independently using the provided scripts.
-
-1. **Start the Client (React App)**
+2. **Start the development server**
    ```bash
-   cd client
    npm run dev
    ```
-   Access the app at: `http://localhost:5173`
+   Open `http://localhost:5173` in your browser.
 
-2. **Start the Server (API)**
+3. **Run unit tests**
    ```bash
-   cd server
-   npm run dev
+   npm test
    ```
-   The API will be available at: `http://localhost:3000`
 
-## 🏗️ Project Structure
+4. **Build for production**
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🗺️ Key Features (Pass 1.0)
+
+### 1. Global City & Device Geolocation
+- **Explicit Device Geolocation:** Users can click "Explore near me" or "Use my current location" to locate themselves via browser GPS.
+- **Protocol Safety:** Clear messaging explaining that browser geolocation requires a secure context (HTTPS or localhost).
+- **Worldwide City Search:** Typeahead search across global cities (e.g. London, Tokyo, Paris, New York, Surat, Mumbai) via OpenStreetMap Nominatim.
+- **Local Persistence:** The selected city is saved locally across sessions in `localStorage`.
+- **Privacy First:** Device coordinates are never transmitted to unauthorized third parties or logged.
+
+### 2. Worldwide Place Discovery
+- **Real Place Data:** Integrated with OpenStreetMap Overpass API for discovering real places across multiple countries.
+- **Categorized Discovery:**
+  - Cafés and food (`amenity=cafe|restaurant|fast_food`)
+  - Nature and parks (`leisure=park|nature_reserve|garden`)
+  - Scenic viewpoints (`tourism=viewpoint`, `natural=peak`)
+  - Arts and culture (`tourism=museum|gallery|artwork`)
+  - Historic places (`historic=*`)
+  - Interesting local attractions (`tourism=attraction|theme_park`)
+- **Factual Integrity:** Displays real place names, real coordinates, calculated distance (in km / m), and verified tags. No fabricated user reviews, ratings, prices, or fake food photography.
+- **Transparent Sourcing:** Visual badges clearly distinguish OpenStreetMap places (`OSM`), community submissions (`Community Gem`), and demo mock data (`Surat Demo`).
+- **Surat Demo Mode:** Surat mock gems are preserved in an explicitly labeled Demo Mode that can be toggled on/off and never pollutes other cities.
+
+### 3. Interactive Leaflet Map
+- **Full Interactive Map:** Replaced legacy static Google Maps iframe with a responsive, gesture-friendly Leaflet map.
+- **Rich Aesthetic:** Styled with dark CartoDB Matter tiles to seamlessly complement Localore's warm brown/amber color palette.
+- **Interactive Pins:** Color-coded pins for each place with popups showing category, name, distance, and direct links.
+- **Sync & Focus:** Clicking a marker opens the place details panel; selecting a place card flies to the marker.
+- **Directions & Navigation:** Direct route links to Google Maps and OpenStreetMap routing using exact coordinates.
+- **Proper Attribution:** Compliant with OpenStreetMap and CARTO tile usage policies.
+
+### 4. Explore & Card Experience
+- **Header City Switcher:** Compact header button displaying current discovery city and live GPS pulse indicator.
+- **Loading Skeletons:** Animated pulsing skeletons during data fetching for a smooth experience.
+- **Helpful Empty States:** Informative empty states with suggestions when no places are found in a specific category or radius.
+- **Distance Badges:** Dynamic distance calculated via Haversine formula relative to the active discovery center.
+
+---
+
+## 🏗️ Architecture
 
 ```
 localore/
-├── client/                # React frontend application
+├── client/
 │   ├── src/
-│   │   ├── assets/        # Static assets (logo, icons, etc.)
-│   │   ├── components/    # Reusable UI components
-│   │   ├── context/       # React Context providers (AuthContext, GemPanelContext)
-│   │   ├── data/          # Mock data (can be replaced with API calls)
-│   │   ├── pages/         # Main page components (Explore, SubmitGem, etc.)
-│   │   ├── types/         # TypeScript type definitions
-│   │   └── App.tsx        # Root component
-│   └── package.json       # Client dependencies
-│
-└── server/                # Node.js/Express backend
-    ├── config/            # Database configuration
-    ├── routes/            # API route handlers
-    ├── services/          # Business logic and data access
-    └── server.js          # Server entry point
-    package.json         # Server dependencies
+│   │   ├── __tests__/         # Vitest unit tests (geo, location, places)
+│   │   ├── components/
+│   │   │   ├── CitySelector/  # Global city search & GPS modal
+│   │   │   ├── GemCard/       # Gem details and actions
+│   │   │   ├── Layout/        # Header, Sidebar, BottomNav, RightPanel
+│   │   │   ├── Map/           # InteractiveMap (Leaflet)
+│   │   │   └── MasonryGrid/   # Responsive Pinterest-style masonry grid
+│   │   ├── context/
+│   │   │   ├── LocationContext.tsx # Location state, GPS hook, persistence
+│   │   │   └── GemPanelContext.tsx # Unified places state, upvotes, bookmarks
+│   │   ├── services/
+│   │   │   ├── locationService.ts  # Nominatim geocoding & city search
+│   │   │   └── placesService.ts    # Overpass API discovery & caching
+│   │   ├── types/
+│   │   │   └── place.ts            # UnifiedPlace & CityLocation models
+│   │   └── utils/
+│   │       └── geo.ts              # Haversine distance & formatting
+│   └── package.json
+└── README.md
 ```
 
-## 🛠️ Key Features
+---
 
-### 🗺️ Explore Page
-- **Interactive Map:** Features a custom, full-page interactive map powered by Mapbox GL JS.
-- **Gem Pins:** Displays discovered gems as interactive markers on the map.
-- **Detail Panel:** Seamless bottom-sheet panel to view detailed gem information without leaving the map view.
+## ⚙️ Provider Requirements & Limitations
 
-### 🔐 Authentication
-- **Sign In:** Supports sign-in with Google.
-- **User Profiles:** Each user has a profile page displaying their submitted gems and bookmarks.
-- **Access Control:** Private routes ensure only authenticated users can access specific features.
+1. **Nominatim (Geocoding & City Search)**
+   - Provider: OpenStreetMap Nominatim (`https://nominatim.openstreetmap.org`)
+   - Limits: Maximum 1 request per second as per OSM usage policy.
+   - Client caching: Implemented in-memory to prevent redundant queries.
+   - For high-scale production: A self-hosted Nominatim instance or commercial provider (e.g., Geocode.earth, LocationIQ) should be configured.
 
-### 📝 Content Creation & Management
-- **Submit Gem Form:** A multi-step form for submitting new gems with details like name, description, location, and photos.
-- **My Gems:** A dedicated page for users to view and manage the gems they have submitted.
-- **Saved Gems:** Users can bookmark gems they find interesting, which are collected in a separate "Saved Gems" section.
+2. **Overpass API (Place Discovery)**
+   - Provider: OpenStreetMap Overpass API (`https://overpass-api.de/api/interpreter` with backup mirrors).
+   - Client caching: 30-minute TTL in-memory cache per coordinate/category to reduce network traffic.
+   - Radius: Default 6–7.5 km around selected location.
 
-## 📁 Component Architecture
-
-The application follows a modular, component-based architecture:
-
-### Client Components
-- **`Layout/Header.tsx`**: Responsive navigation header with brand logo, global search, and user authentication controls.
-- **`Layout/Sidebar.tsx`**: Left-hand navigation sidebar with links to main sections (Explore, Saved Gems, My Gems) and nearby area filters.
-- **`MasonryGrid.tsx`**: A flexible grid layout component to display gem cards with responsive column adjustments.
-- **`GemCard.tsx`**: Individual cards for displaying gem information, supporting both grid and map views.
-- **`GemPanel.tsx`**: A collapsible bottom panel that slides up to reveal detailed information about a selected gem.
-
-### Server Architecture
-- **`server.js`**: The main entry point for the Express server, handling global middleware and route registration.
-- **`routes/`**: Defines RESTful API endpoints for authentication (`/auth`), gems (`/gems`), user data (`/user`), and search (`/search`).
-- **`services/`**: Contains the core business logic, including authentication services and data handling logic for gems.
-
-## 🧪 Testing
-
-Unit tests can be run using the built-in testing utilities:
-
-```bash
-cd client
-npm test
-```
-
-## 🔄 Project Roadmap
-
-### Phase 1: Core Foundation (Completed)
-- [x] Project setup and repository structure.
-- [x] Basic client application with navigation.
-- [x] Core API server with database configuration.
-- [x] Authentication system (Google Sign-In).
-
-### Phase 2: User Features
-- [x] Explore page with interactive map and gem pins.
-- [x] Gem submission flow.
-- [x] User profiles and saved gems functionality.
-- [x] Gem detail view and sharing.
-
-### Phase 3: Polish & Admin Features
-- [x] Admin panel for content management.
-- [x] Responsive UI improvements and animations.
-- [x] Search functionality and filtering.
-- [x] Performance optimization.
+3. **Leaflet Tile Layer**
+   - Provider: CARTO Dark Matter (`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`)
+   - Attribution: Includes required attribution `&copy; OpenStreetMap contributors &copy; CARTO`.

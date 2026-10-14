@@ -8,8 +8,8 @@ type RightPanelProps = {
   gem: GemCardData | null;
   onClose: () => void;
   isOpen: boolean;
-  onUpvoteToggle?: (id: number) => void;
-  onBookmarkToggle?: (id: number) => void;
+  onUpvoteToggle?: (id: string | number) => void;
+  onBookmarkToggle?: (id: string | number) => void;
 };
 
 function useIsMobile() {

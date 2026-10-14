@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useGemPanel, type GemDraft } from "../../context/GemPanelContext";
-import { AREAS, GEM_CATEGORIES } from "../../data/constants";
+import { useLocationState } from "../../context/LocationContext";
+import { AREAS } from "../../data/constants";
+import { PLACE_CATEGORIES } from "../../types/place";
 
 type GemFormProps = {
   onSuccess: () => void;
@@ -15,13 +17,9 @@ const inputIdle = "border-[#3D2A18] focus:border-[#E8743A]";
 const labelCls =
   "block text-[10px] font-bold tracking-[0.10em] uppercase text-[#A07050] mb-1.5";
 
-/**
- * Share-a-gem form — mirrors the fields of our mock gem data so the whole
- * flow works end-to-end in mock mode. Swap `addGem` for an API call when
- * the backend lands.
- */
 export default function GemForm({ onSuccess }: GemFormProps) {
   const { addGem } = useGemPanel();
+  const { currentLocation } = useLocationState();
 
   const [image, setImage] = useState("");
   const [title, setTitle] = useState("");
@@ -124,7 +122,7 @@ export default function GemForm({ onSuccess }: GemFormProps) {
       <div>
         <span className={labelCls}>Category</span>
         <div className="flex flex-wrap gap-[7px]">
-          {GEM_CATEGORIES.map((cat) => {
+          {PLACE_CATEGORIES.filter((c) => c !== "All").map((cat) => {
             const isActive = category === cat;
             return (
               <button
@@ -133,7 +131,7 @@ export default function GemForm({ onSuccess }: GemFormProps) {
                 onClick={() => setCategory(isActive ? "" : cat)}
                 className={`
                   px-[13px] py-[6px] rounded-full text-[11px] font-medium cursor-pointer
-                  transition-all duration-150 active:scale-95
+                  transition-all duration-150 active:scale-95 border
                   ${
                     isActive
                       ? "bg-[#261A14] text-[#E8743A] border-[#E8743A]/40"
@@ -152,23 +150,22 @@ export default function GemForm({ onSuccess }: GemFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor="gem-area" className={labelCls}>
-            Area
+            Area / Neighborhood
           </label>
-          <select
+          <input
             id="gem-area"
+            type="text"
+            list="known-areas"
             value={area}
             onChange={(e) => setArea(e.target.value)}
-            className={`${inputBase} ${inputIdle} appearance-none cursor-pointer ${area ? "" : "text-[#6B4830]"}`}
-          >
-            <option value="" disabled>
-              Select area
-            </option>
+            placeholder={`e.g. ${currentLocation.city === "Surat" ? "Rander, Nanpura..." : "Downtown, Central..."}`}
+            className={`${inputBase} ${inputIdle}`}
+          />
+          <datalist id="known-areas">
             {AREAS.map((a) => (
-              <option key={a.label} value={a.label}>
-                {a.label}
-              </option>
+              <option key={a.label} value={a.label} />
             ))}
-          </select>
+          </datalist>
         </div>
         <div>
           <label htmlFor="gem-hours" className={labelCls}>

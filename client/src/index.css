@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 /* ── Scrollbar utilities used across the app shell ──────────────────────────
    (Tailwind v4 has no built-in scrollbar styling — these were referenced but

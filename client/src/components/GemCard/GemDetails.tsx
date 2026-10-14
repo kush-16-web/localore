@@ -1,22 +1,57 @@
 import type { GemCardData } from "../MasonryGrid"
 
-/** Keyless Google Maps embed for the gem's area. */
+/** Keyless Google Maps embed using coordinates or place name. */
 export function GemMap({ gem, className = "h-52" }: { gem: GemCardData; className?: string }) {
+  const query = gem.coordinates
+    ? `${gem.coordinates.lat},${gem.coordinates.lng}`
+    : `${gem.title}, ${gem.area}`;
+
   return (
     <section>
-      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#F5E6D0]">
-        <i className="ti ti-map-pin text-[#E8743A]" />
-        Find it on the map
-      </h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-[#F5E6D0]">
+          <i className="ti ti-map-pin text-[#E8743A]" />
+          Location & Map
+        </h3>
+        {gem.coordinates && (
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${gem.coordinates.lat},${gem.coordinates.lng}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] text-[#E8743A] hover:underline flex items-center gap-1 font-medium"
+          >
+            <span>Directions</span>
+            <i className="ti ti-arrow-up-right text-xs" />
+          </a>
+        )}
+      </div>
       <div className={`${className} w-full overflow-hidden rounded-2xl ring-1 ring-white/10`}>
         <iframe
           title={`Map of ${gem.title}`}
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(`${gem.area}, Surat`)}&z=13&output=embed`}
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`}
           className="h-full w-full border-0"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
       </div>
+      {gem.address && (
+        <p className="mt-2 text-xs text-[#A07050]">
+          📍 {gem.address}
+        </p>
+      )}
+      {gem.website && (
+        <p className="mt-1 text-xs">
+          <a
+            href={gem.website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[#E8743A] hover:underline flex items-center gap-1"
+          >
+            <i className="ti ti-world text-xs" />
+            <span>Visit Website</span>
+          </a>
+        </p>
+      )}
     </section>
   )
 }
@@ -114,12 +149,16 @@ export default function GemDetails({ gem }: { gem: GemCardData }) {
 
 type GemActionsProps = {
   gem: GemCardData
-  onUpvoteToggle?: (id: number) => void
-  onBookmarkToggle?: (id: number) => void
+  onUpvoteToggle?: (id: string | number) => void
+  onBookmarkToggle?: (id: string | number) => void
 }
 
 /** Pinned action row: upvote / save / open in maps. */
 export function GemActions({ gem, onUpvoteToggle, onBookmarkToggle }: GemActionsProps) {
+  const directionsUrl = gem.coordinates
+    ? `https://www.google.com/maps/dir/?api=1&destination=${gem.coordinates.lat},${gem.coordinates.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gem.title} ${gem.area}`)}`;
+
   return (
     <div className="flex gap-2.5">
       <button
@@ -147,10 +186,10 @@ export function GemActions({ gem, onUpvoteToggle, onBookmarkToggle }: GemActions
       </button>
 
       <a
-        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gem.title} ${gem.area}`)}`}
+        href={directionsUrl}
         target="_blank"
         rel="noreferrer"
-        aria-label="Open in Maps"
+        aria-label="Open Directions"
         className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#E8743A] text-[#120B08]
           shadow-lg shadow-[#E8743A]/25 active:scale-95 transition-transform"
       >

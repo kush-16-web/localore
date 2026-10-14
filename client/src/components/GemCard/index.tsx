@@ -2,8 +2,8 @@ import type { GemCardData } from "../MasonryGrid"
 
 type Props = {
     gem: GemCardData
-    onUpvoteToggle?: (id: number) => void
-    onBookmarkToggle?: (id: number) => void
+    onUpvoteToggle?: (id: string | number) => void
+    onBookmarkToggle?: (id: string | number) => void
 }
 
 export default function GemCard({ gem, onUpvoteToggle, onBookmarkToggle }: Props) {
