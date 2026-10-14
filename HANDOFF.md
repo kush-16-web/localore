@@ -1,90 +1,103 @@
-# LOCALORE — PASS 1.0 HANDOFF: WORLDWIDE LOCATION-FIRST DISCOVERY
+# LOCALORE — PASS 1.1 HANDOFF: ADAPTIVE AMBIENT THEME ENGINE & CATEGORY SVG ATMOSPHERES
 
-**Commit:** `e9dfbde8ae066ac966342dd1ea9a53843ded95f9`  
-**Date:** October 14, 2026
+**Date:** October 14, 2026  
+**Status:** Completed & Tested
+
+---
 
 ## 📋 Summary of Completed Work
 
-In Pass 1.0, Localore was transformed from a Surat-only mock prototype into a functional, worldwide location-aware discovery platform while strictly preserving the visual identity, dark brown/orange aesthetic, layout, and component architecture.
-
-### 1. Location Detection & Services
-- **Reusable Location Hook & Service** (`LocationContext.tsx`, `locationService.ts`):
-  - Explicit user-initiated device geolocation ("Explore near me", "Use my location").
-  - Reverse geocoding via OpenStreetMap Nominatim with in-memory caching.
-  - Worldwide city search with debounced typeahead.
-  - Local persistence in `localStorage` under `localore_selected_location`.
-  - Secure context detection: Explains that browser geolocation requires HTTPS or localhost.
-  - Clean error handling for permission denial, timeouts, and device unavailability without blocking app usage.
-  - Privacy preserved: Coordinates are not logged or leaked. No silent IP geolocation substitution.
-
-### 2. Worldwide Place Discovery
-- **OpenStreetMap Overpass Integration** (`placesService.ts`):
-  - Multi-mirror failover (`overpass-api.de`, `lz4.overpass-api.de`, `overpass.kumi.systems`).
-  - Standardized categories:
-    - *Cafés and food*
-    - *Nature and parks*
-    - *Scenic viewpoints*
-    - *Arts and culture*
-    - *Historic places*
-    - *Interesting local attractions*
-  - Factual integrity: Real place names, exact coordinates, calculated distance (via Haversine formula), real addresses, and official websites when available.
-  - No fabricated user reviews, ratings, prices, or fake food photography.
-  - Clear data provenance badges: `OSM`, `Community Gem`, and `Surat Demo`.
-  - Surat mock gems are preserved in an explicitly labeled Demo Mode that can be toggled on/off and never pollutes non-Surat cities.
-  - 30-minute TTL query cache to respect rate limits.
-
-### 3. Real Interactive Map
-- **Interactive Leaflet Map** (`InteractiveMap.tsx`, `MapPage/index.tsx`):
-  - Replaced legacy static Google Maps iframe with interactive Leaflet map.
-  - Styled with CARTO Dark Matter tiles matching Localore's dark brown/amber palette.
-  - Circular discovery radius overlay showing the active search area (~6–7.5 km).
-  - Custom colored pin markers for places with popups and direct directions links.
-  - Bidirectional focus: clicking a marker opens place details; selecting a gem card flies to marker.
-  - Touch-friendly mobile gestures (pinch zoom, drag, double tap).
-  - Tile attribution compliant with OpenStreetMap and CARTO policies.
-
-### 4. Explore Page & Header
-- **City Switcher in Header** (`Header.tsx`, `CitySelectorModal.tsx`):
-  - Compact header pill showing active city, live GPS pulse indicator, and click-to-change modal.
-  - Quick-pick popular cities (Surat, Tokyo, London, Paris, New York, Mumbai).
-- **Discovery Banner & Actions**:
-  - Prominent "Explore near me" button.
-  - Demo Mode toggle for Surat.
-  - Real-time place counter and category tabs.
-  - Skeletons during data load and contextual empty states when results are sparse.
-
-### 5. Unified Place Model
-- Standardized `UnifiedPlace` interface in `types/place.ts` extending `GemCardData` across `GemCard`, `GemDetails`, `RightPanel`, `MasonryGrid`, and `MapPage`.
+In Pass 1.1, Localore's ColorThief integration was transformed into an image-driven three-level ambient theme system with responsive vector atmospheres. The original visual identity (dark espresso baseline, warm orange accents, Pinterest-style masonry, mobile bottom sheet) was strictly preserved while enabling dynamic, place-inspired color environments.
 
 ---
 
-## 🧪 Validation Results
+### 1. Three-Level Ambient Theme Architecture
 
-1. **Unit Tests (Vitest)**
-   - `client/src/__tests__/geo.test.ts`: Passed (Haversine distance calculations, sub-km meter formatting, km formatting).
-   - `client/src/__tests__/location.test.ts`: Passed (Default city fallback, custom city persistence, corrupted data handling, popular cities).
-   - `client/src/__tests__/places.test.ts`: Passed (Surat demo gem coordinate validity, category schema).
-   - **Result:** 3 test suites, 11 tests passed with 0 failures.
+| Level | State | Behavior |
+| :--- | :--- | :--- |
+| **Level 1** | **Default Localore** | Restores original espresso background (`#120B08`), brand orange accents (`#E8743A`), and clean surfaces when no gem is open and "All" category is selected. No background SVG artwork. |
+| **Level 2** | **Collective Category Theme** | Samples actual gem images from the active city and selected category (Food, Nature, Shopping, Viewpoints, Heritage, etc.). Clusters colors in OKLCH/OKLab perceptual color space and generates cohesive dark espresso surfaces, accents, and category-specific SVG motifs. |
+| **Level 3** | **Selected Gem Override** | Temporarily overrides category palette with the opened gem's individual image palette. Strengthens ambient glow in the desktop side panel and mobile bottom sheet. Seamlessly restores Level 2 or Level 1 when closed. |
 
-2. **TypeScript & Production Build**
-   - Command: `npm run build` (`tsc -b && vite build`)
-   - **Result:** Successfully compiled with 0 errors.
+**Priority Rule:** `Selected Gem (Level 3) > Active Category (Level 2) > Default Localore (Level 1)`.
 
 ---
 
-## ⚠️ Known Limitations & Provider Notes
+### 2. Perceptual Color Engine (`client/src/utils/colorEngine.ts`)
 
-1. **OpenStreetMap Public API Rate Limits**
-   - Nominatim and Overpass public servers have rate limits (~1 req/sec). While aggressive in-memory caching and debouncing are in place, high traffic testing should use a dedicated proxy or API key provider (e.g. Geoapify, LocationIQ, or self-hosted Overpass).
-2. **Browser Geolocation Secure Context**
-   - Modern browsers strictly disallow `navigator.geolocation` on non-HTTPS origins (except `localhost`). When deploying for remote user testing, HTTPS is mandatory.
-3. **Backend Service**
-   - The `server/` directory is currently a placeholder without active Express routes. Community gems, bookmarks, and upvotes are persisted in the browser's `localStorage` for Pass 1.0.
+- **Perceptual Color Spaces:**
+  - Converts sRGB to linear sRGB, then to OKLab ($L, a, b$) and OKLCH ($L, C, h$).
+  - Perceptual distance ($\Delta E$) in OKLab for accurate clustering.
+- **Usability Filtering (`isUsablePaletteColor`):**
+  - Rejects near-blacks ($L < 0.12$), near-whites ($L > 0.92$), and washed-out grays ($C < 0.02$) to capture the chromatic essence of photos.
+- **Deterministic Medoid Clustering:**
+  - Categorical colors are bucketed into 12 hue sectors (30° intervals).
+  - Selects cluster medoids (the exact color with minimum cumulative distance to neighbors) instead of arithmetic RGB averaging, preventing muddy brown/gray averages.
+- **Contrast & Accessibility:**
+  - Derives dark surfaces ($L \approx 0.075 - 0.155$) and vibrant accents ($L \approx 0.62 - 0.72$) using OKLCH.
+  - WCAG 2.1 relative luminance and contrast ratio validation ensuring $>12:1$ contrast against cream text (`#F5E6D0`).
 
 ---
 
-## 🚀 Recommended Next Pass (Pass 2.0)
+### 3. Category SVG Atmospheres (`client/src/components/Atmosphere/CategoryAtmosphere.tsx`)
 
-1. **Backend & Sync:** Implement Express / MongoDB backend in `server/` for cross-device persistence of community submitted gems, user profiles, and upvotes.
-2. **Photo Submissions:** Implement direct photo upload (e.g. Cloudinary / S3 / Firebase Storage) for community gem submissions instead of image URLs.
-3. **Offline Caching:** Add a Service Worker for offline map tile caching and visited city gems.
+Lightweight, scalable vector artwork placed behind content:
+- **Food & Cafés:** Flowing culinary steam curls, curved plate and bowl minimalist contours.
+- **Nature & Parks:** Organic leaves, delicate botanical silhouettes, contour terrain ridges.
+- **Scenic Viewpoints:** Mountain silhouettes, horizon curves, topographic rings.
+- **Heritage & Culture:** Classical architectural arches, ornamental geometry, columns.
+- **Shopping & Markets:** Geometric boutique patterns, modern shopping silhouettes.
+- **Quiet Spots:** Soft concentric ripples, gentle flowing lines.
+- **Surprise Me:** Orbital compass rose with starlight pips and discovery trails.
+- **Default:** Minimalist concentric celestial rings.
+
+**Rules Enforced:**
+- All vector colors adapt dynamically via `var(--ambient-svg-color)`.
+- Non-blocking: `pointer-events-none` and `aria-hidden="true"`.
+- Mobile-optimized scaling and panel-specific overlay modes.
+
+---
+
+### 4. CSS Custom Properties & Transitions (`client/src/index.css`)
+
+Centralized design tokens updated reactively on `:root`:
+- `--ambient-bg`: Base atmospheric background
+- `--ambient-surface`: Header, sidebar, and card surface
+- `--ambient-surface-raised`: Gem details panel and mobile bottom sheet background
+- `--ambient-accent`: Place-derived or brand orange accent
+- `--ambient-accent-muted`: Subtle chip and badge tint
+- `--ambient-border`: Subtle boundary line
+- `--ambient-glow`: Radial atmospheric wash
+- `--ambient-text`: Cream text (`#F5E6D0`)
+- `--ambient-text-muted`: Secondary text (`#C8A888`)
+- `--ambient-svg-color`: Category artwork stroke/fill tint
+
+**Transitions:** Smooth 450–650ms CSS color and opacity transitions with `@media (prefers-reduced-motion: reduce)` support.
+
+---
+
+### 5. Mobile Experience & Surprise Me
+
+- **Mobile Bottom Sheet:** Vaul drawer utilizes `--ambient-surface-raised` and category vector motifs with readable controls and safe-area spacing.
+- **Surprise Me Integration:** Exploration button on Explore header triggers lightweight compass motif and reveals a serendipitous gem with full Level 3 ambient transition.
+
+---
+
+## 🧪 Validation & Test Results
+
+1. **Vitest Unit Tests (`npm test` in `client`)**
+   - `src/__tests__/geo.test.ts`: 5/5 passed.
+   - `src/__tests__/location.test.ts`: 4/4 passed.
+   - `src/__tests__/places.test.ts`: 2/2 passed.
+   - `src/__tests__/theme.test.ts`: 12/12 passed (Level 1 defaults, WCAG contrast, OKLab/OKLCH roundtrip, usability filters, perceptual distance, palette derivation, collective category generation, caching, CORS/fallback safety).
+   - **Total:** 4 test suites, 23 passed (100%).
+
+2. **Production Build (`npm run build` in `client`)**
+   - TypeScript check (`tsc -b`) and Vite production bundle generated cleanly without errors.
+
+---
+
+## 🚀 Recommended Next Pass (Pass 1.2 or 2.0)
+
+1. **Backend Persistence (Pass 2.0):** Implement Express API in `server/` with MongoDB/PostgreSQL for saving community gem palettes directly upon upload.
+2. **Offline Tile & Palette Caching:** Add a service worker for offline browsing of visited cities and extracted gem palettes.

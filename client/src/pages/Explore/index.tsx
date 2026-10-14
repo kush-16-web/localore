@@ -111,7 +111,13 @@ export default function Explore() {
       />
 
       {/* Discovery banner / Location info bar */}
-      <div className="px-4 py-2.5 bg-[#140C08]/90 border-b border-[#2B1B10] flex flex-wrap items-center justify-between gap-2.5 text-xs">
+      <div
+        className="px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-2.5 text-xs transition-colors duration-500"
+        style={{
+          backgroundColor: "var(--ambient-surface, #140C08)",
+          borderColor: "var(--ambient-border, #2B1B10)",
+        }}
+      >
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 text-[#F5E6D0]">
             <i className="ti ti-map-pin text-[#E8743A]" />

@@ -62,7 +62,7 @@ const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
  */
 function buildOverpassQuery(coords: GeoCoordinates, category: string, radiusMeters = 6000): string {
   const { lat, lng } = coords;
-  let filters = "";
+  let filters: string;
 
   switch (category) {
     case "Cafés and food":
@@ -225,7 +225,7 @@ export async function fetchNearbyPlaces(
       "Local Spot";
 
     // Build real factual description without inventing falsehoods
-    let description = "";
+    let description: string;
     if (el.tags.description) {
       description = el.tags.description;
     } else {

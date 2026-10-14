@@ -1,4 +1,5 @@
 import { PLACE_CATEGORIES } from "../../types/place";
+import { useAmbientTheme } from "../../context/AmbientThemeContext";
 
 const CATEGORY_ICONS: Record<string, string> = {
   All: "ti-compass",
@@ -7,7 +8,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   "Scenic viewpoints": "ti-eye",
   "Arts and culture": "ti-palette",
   "Historic places": "ti-building-monument",
-  "Interesting local attractions": "ti-sparkles",
+  "Interesting local attractions": "ti-compass",
 };
 
 type ExploreHeaderProps = {
@@ -19,10 +20,18 @@ export default function ExploreHeader({
   activeTab,
   onTabChange,
 }: ExploreHeaderProps) {
+  const { triggerSurpriseMe, surpriseMeActive } = useAmbientTheme();
+
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3 border-b border-[#332010] backdrop-blur-lg shrink-0">
+    <div
+      className="flex items-center justify-between gap-3 px-4 py-3 border-b backdrop-blur-lg shrink-0 transition-colors duration-500"
+      style={{
+        borderColor: "var(--ambient-border, #332010)",
+        backgroundColor: "var(--ambient-surface, #140C08)",
+      }}
+    >
       {/* Category filter tabs */}
-      <div className="flex items-center gap-[6px] overflow-x-auto py-1 scrollbar-none shrink-0 w-full">
+      <div className="flex items-center gap-[6px] overflow-x-auto py-1 scrollbar-none shrink min-w-0">
         {PLACE_CATEGORIES.map((cat) => {
           const isActive = activeTab === cat;
           const icon = CATEGORY_ICONS[cat] || "ti-tag";
@@ -47,6 +56,21 @@ export default function ExploreHeader({
           );
         })}
       </div>
+
+      {/* Surprise Me discovery button */}
+      <button
+        onClick={triggerSurpriseMe}
+        disabled={surpriseMeActive}
+        title="Surprise me with a random hidden gem"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap border border-[#E8743A]/40 bg-[#E8743A]/10 text-[#E8743A] hover:bg-[#E8743A]/20 transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+      >
+        <i
+          className={`ti ${
+            surpriseMeActive ? "ti-compass animate-spin" : "ti-sparkles"
+          } text-xs`}
+        />
+        <span className="hidden sm:inline">Surprise Me</span>
+      </button>
     </div>
   );
 }

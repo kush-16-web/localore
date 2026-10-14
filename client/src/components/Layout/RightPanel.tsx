@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Drawer } from 'vaul';
 import GemDetails, { GemActions, GemMap, NarrationTeaser } from '../GemCard/GemDetails';
-import { useColorThief } from '../../hooks/useColorThief';
+import { useAmbientTheme } from '../../context/AmbientThemeContext';
+import CategoryAtmosphere from '../Atmosphere/CategoryAtmosphere';
 import type { GemCardData } from '../MasonryGrid';
 
 type RightPanelProps = {
@@ -23,28 +24,35 @@ function useIsMobile() {
   return isMobile;
 }
 
-const FALLBACK_ACCENT = '232,116,58'; // brand orange #E8743A
-
 export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBookmarkToggle }: RightPanelProps) {
   const isMobile = useIsMobile();
+  const { palette } = useAmbientTheme();
 
-  // YT Music-style dynamic colour extracted from the cover image
-  const { rgb, palette } = useColorThief(gem?.image ?? '');
-  const accent = rgb.length === 3 ? rgb.join(',') : FALLBACK_ACCENT;
-  const accentSoft = palette?.[2]?.length === 3 ? palette[2].join(',') : accent;
+  const primaryRgbStr = palette.primaryRgb.join(',');
+  const secondaryRgbStr = palette.secondaryRgb.join(',');
 
   return (
     <>
-      {/* ── Desktop panel — immersive now-playing ─────────────────────── */}
+      {/* ── Desktop panel — Level 3 Immersive Gem Atmosphere ───────────────── */}
       <aside
         className={`relative hidden md:block
           h-full flex-shrink-0
-          transition-all duration-300 ease-in-out overflow-hidden
+          transition-all duration-300 ease-in-out overflow-hidden border-l border-white/10
           ${isOpen ? 'w-[400px] xl:w-[460px]' : 'w-0'}
         `}
+        style={{
+          backgroundColor: 'var(--ambient-surface-raised, #1C1410)',
+        }}
       >
-        {/* Depth tint so content stays readable over the ambient wash */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#120B08]/40 via-[#120B08]/15 to-[#120B08]/70 pointer-events-none" />
+        {/* Subtle Ambient Glow and Category SVG Artwork */}
+        <div
+          className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+          style={{
+            background: `radial-gradient(120% 60% at 50% 0%, rgba(${primaryRgbStr}, 0.32), transparent 70%)`,
+          }}
+        />
+
+        {gem && <CategoryAtmosphere category={gem.category} variant="panel" />}
 
         {/* Floating close */}
         <button
@@ -52,17 +60,17 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
           aria-label="Close panel"
           className="absolute right-5 top-5 z-20 grid h-9 w-9 place-items-center cursor-pointer 
             rounded-full bg-black/40 text-[#F5E6D0] backdrop-blur-md ring-1 ring-white/10
-            active:scale-90 hover:text-[#cd5a0e] transition-all"
+            active:scale-90 hover:text-[#E8743A] transition-all"
         >
           <i className="ti ti-x text-lg" />
         </button>
 
-        <div className="relative h-full flex flex-col">
+        <div className="relative h-full flex flex-col z-10">
           {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#3D2A18] scrollbar-track-transparent">
             {gem ? (
               <div className="px-6 pt-16 pb-6 space-y-6">
-                {/* Big cover art */}
+                {/* Cover art */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl ring-1 ring-white/15 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]">
                   <img src={gem.image} alt={gem.title} className="h-full w-full object-cover" />
                   <span className="absolute left-3 top-3 rounded-lg bg-black/45 px-2.5 py-1 text-[11px] font-medium text-[#F5E6D0] backdrop-blur-md">
@@ -97,7 +105,7 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
                 {/* Description */}
                 <p className="text-sm leading-7 text-[#C8A888]">{gem.description}</p>
 
-                {/* Voice narration — coming soon */}
+                {/* Voice narration teaser */}
                 <NarrationTeaser />
 
                 {/* Map */}
@@ -112,40 +120,37 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
 
           {/* Pinned action bar */}
           {gem && (
-            <div className="relative shrink-0 border-t border-white/10 bg-[#120B08]/80 backdrop-blur-xl px-5 py-3">
+            <div className="relative shrink-0 border-t border-white/10 bg-[#120B08]/85 backdrop-blur-xl px-5 py-3">
               <GemActions gem={gem} onUpvoteToggle={onUpvoteToggle} onBookmarkToggle={onBookmarkToggle} />
             </div>
           )}
         </div>
       </aside>
 
-      {/* ── Mobile bottom sheet ───────────────────────────────────────── */}
+      {/* ── Mobile bottom sheet — Highest Visual Priority ──────────────── */}
       <Drawer.Root open={isOpen && isMobile} onOpenChange={(open) => !open && onClose()}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/60 z-[998] md:hidden" />
+          <Drawer.Overlay className="fixed inset-0 bg-black/65 z-[998] md:hidden backdrop-blur-[2px]" />
 
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-[999] md:hidden
-              h-[92dvh] outline-none rounded-t-3xl border-t border-white/10
-              shadow-[0_-16px_50px_rgba(0,0,0,0.6)]
-              flex flex-col overflow-hidden
-              bg-[#120B08]"
+              h-[92dvh] outline-none rounded-t-3xl border-t border-white/15
+              shadow-[0_-16px_50px_rgba(0,0,0,0.7)]
+              flex flex-col overflow-hidden transition-colors duration-500"
+            style={{
+              backgroundColor: 'var(--ambient-surface-raised, #1C1410)',
+            }}
           >
-            {/* Dynamic gradient background — colours only */}
+            {/* Dynamic ambient wash for mobile drawer */}
             {gem && (
               <>
                 <div
-                  className="absolute inset-x-0 top-0 h-[55%] pointer-events-none"
+                  className="absolute inset-x-0 top-0 h-[60%] pointer-events-none transition-all duration-700"
                   style={{
-                    background: `linear-gradient(to bottom, rgba(${accent},0.45), rgba(${accentSoft},0.15) 55%, transparent)`
+                    background: `linear-gradient(to bottom, rgba(${primaryRgbStr}, 0.38), rgba(${secondaryRgbStr}, 0.12) 60%, transparent)`
                   }}
                 />
-                <div
-                  className="absolute inset-x-0 bottom-0 h-[35%] pointer-events-none"
-                  style={{
-                    background: `linear-gradient(to top, rgba(${accent},0.16), transparent)`
-                  }}
-                />
+                <CategoryAtmosphere category={gem.category} variant="panel" />
               </>
             )}
 
@@ -156,17 +161,6 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
 
             <Drawer.Title className="sr-only">{gem?.title}</Drawer.Title>
 
-            {/* Floating close */}
-            {/* <button
-              onClick={onClose}
-              aria-label="Close panel"
-              className="absolute right-4 top-4 z-20 grid h-9 w-9 place-items-center
-                rounded-full bg-black/40 text-[#F5E6D0] backdrop-blur-md ring-1 ring-white/10
-                active:scale-90 hover:text-[#cd5a0e] transition-all"
-            >
-              <i className="ti ti-x text-lg" />
-            </button> */}
-
             {/* Scrollable body */}
             <div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain px-5 pt-3 pb-8 space-y-5 scrollbar-none">
               {gem && <GemDetails gem={gem} />}
@@ -175,7 +169,7 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
             {/* Pinned action bar — thumb zone */}
             {gem && (
               <div
-                className="relative z-10 shrink-0 border-t border-white/10 bg-[#120B08]/80 backdrop-blur-xl
+                className="relative z-10 shrink-0 border-t border-white/10 bg-[#120B08]/85 backdrop-blur-xl
                   px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
               >
                 <div className="mx-auto max-w-md">

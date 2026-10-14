@@ -4,48 +4,52 @@ import Header from './Header';
 import RightPanel from './RightPanel';
 import BottomNav from './BottomNav';
 import { useGemPanel } from '../../context/GemPanelContext';
-import { useColorThief } from '../../hooks/useColorThief';
-
-const FALLBACK_ACCENT = '232,116,58'; // brand orange #E8743A
+import { useAmbientTheme } from '../../context/AmbientThemeContext';
+import CategoryAtmosphere from '../Atmosphere/CategoryAtmosphere';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { selectedGem, closePanel, toggleUpvote, toggleBookmark } = useGemPanel();
+  const { palette, activeCategory, level } = useAmbientTheme();
 
-  // YT Music-style ambient colour — computed once here for the WHOLE app shell
-  const { rgb, palette } = useColorThief(selectedGem?.image ?? '');
-  const accent = rgb.length === 3 ? rgb.join(',') : FALLBACK_ACCENT;
-  const accentSoft = palette?.[2]?.length === 3 ? palette[2].join(',') : accent;
+  const primaryRgbStr = palette.primaryRgb.join(',');
+  const secondaryRgbStr = palette.secondaryRgb.join(',');
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* ── App-wide ambient wash — sits behind every surface ── */}
+    <div
+      className="flex flex-col h-screen overflow-hidden text-[#F5E6D0] transition-colors duration-500 ease-in-out"
+      style={{
+        backgroundColor: "var(--ambient-bg, #120B08)",
+      }}
+    >
+      {/* ── App-wide dynamic ambient wash — Level 1 / Level 2 / Level 3 ── */}
       <div
-        key={selectedGem?.id ?? 'none'}
+        key={`ambient-${level}-${activeCategory}-${selectedGem?.id ?? 'none'}`}
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 h-[60vh] -z-10"
+        className="pointer-events-none fixed inset-x-0 top-0 h-[65vh] -z-10 transition-all duration-700 ease-in-out"
         style={{
-          animation: 'ambientFade 900ms ease',
           background: `
-            radial-gradient(120% 90% at 20% 0%, rgba(${accent},0.34), transparent 60%),
-            radial-gradient(100% 80% at 85% 5%, rgba(${accentSoft},0.22), transparent 65%),
-            linear-gradient(to bottom, rgba(${accent},0.14), transparent)`
+            radial-gradient(125% 90% at 20% 0%, rgba(${primaryRgbStr}, 0.28), transparent 65%),
+            radial-gradient(100% 80% at 85% 5%, rgba(${secondaryRgbStr}, 0.18), transparent 65%),
+            linear-gradient(to bottom, rgba(${primaryRgbStr}, 0.08), transparent)`
         }}
       />
-      <style>{`
-        @keyframes ambientFade {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-      `}</style>
+
+      {/* Category-specific SVG Atmosphere Artwork (Level 2 & Level 3) */}
+      <CategoryAtmosphere category={activeCategory} variant="background" />
 
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        {/* Main content — shrinks naturally when RightPanel is open */}
-        <main className="flex-1 bg-[#140C08]/85 overflow-hidden">
+        {/* Main content — transitions smoothly with ambient background */}
+        <main
+          className="flex-1 overflow-hidden transition-colors duration-500 ease-in-out"
+          style={{
+            backgroundColor: "var(--ambient-bg, #140C08)",
+          }}
+        >
           {children}
         </main>
-        {/* RightPanel — frame-level sibling of main, just like Sidebar */}
+        {/* RightPanel / BottomSheet — frame-level sibling of main */}
         <RightPanel
           gem={selectedGem}
           onClose={closePanel}

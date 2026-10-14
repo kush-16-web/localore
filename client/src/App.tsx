@@ -6,6 +6,7 @@ import Messages from './pages/Messages'
 import SubmitGem from './pages/SubmitGem'
 import { GemPanelProvider } from './context/GemPanelContext'
 import { LocationProvider } from './context/LocationContext'
+import { AmbientThemeProvider } from './context/AmbientThemeContext'
 import { Navigate, Route, BrowserRouter, Routes } from 'react-router-dom'
 import './App.css'
 
@@ -14,7 +15,8 @@ function App() {
     <BrowserRouter>
       <LocationProvider>
         <GemPanelProvider>
-        <Layout>
+          <AmbientThemeProvider>
+            <Layout>
           <Routes>
             <Route path='/' element={<Explore />} />
             <Route path='/map' element={<MapPage />} />
@@ -29,9 +31,10 @@ function App() {
             <Route path='*' element={<Navigate to='/' replace />} />
           </Routes>
         </Layout>
-      </GemPanelProvider>
-    </LocationProvider>
-  </BrowserRouter>
+      </AmbientThemeProvider>
+        </GemPanelProvider>
+      </LocationProvider>
+    </BrowserRouter>
   )
 }
 
