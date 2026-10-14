@@ -100,10 +100,19 @@ export default function MobileGemSheet({
   accent,
   accentSoft,
 }: MobileGemSheetProps) {
+  const isExpandedQuery =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("expand") === "1";
+
+  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(
+    isExpandedQuery ? 1 : "480px"
+  );
+  const isExpanded =
+    activeSnapPoint === 1 || activeSnapPoint === "1" || activeSnapPoint === 0.94;
+
   const [prevGemId, setPrevGemId] = useState<string | number | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [heartAnim, setHeartAnim] = useState<HeartAnimState | null>(null);
   const [isLikeBouncing, setIsLikeBouncing] = useState(false);
@@ -113,7 +122,7 @@ export default function MobileGemSheet({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
 
-  // References for gesture recognition on hero
+  // References for double tap like on hero
   const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(
     null
   );
@@ -122,7 +131,6 @@ export default function MobileGemSheet({
     x: 0,
     y: 0,
   });
-  const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timers for double-tap heart animation
   const animTimer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -137,18 +145,24 @@ export default function MobileGemSheet({
   if (gem && gem.id !== prevGemId) {
     setPrevGemId(gem.id);
     setSelectedImage(null);
-    setIsOverlayVisible(true);
     setIsDescriptionExpanded(false);
     setIsLightboxOpen(false);
     setScrollY(0);
+    setActiveSnapPoint(isExpandedQuery ? 1 : "480px");
   }
 
   const activeImage = selectedImage ?? gem?.image ?? "";
 
+  // Reset snap point when opened
+  useEffect(() => {
+    if (isOpen && gem) {
+      setActiveSnapPoint(isExpandedQuery ? 1 : "480px");
+    }
+  }, [isOpen, gem?.id, isExpandedQuery]);
+
   // Clean up timers on unmount
   useEffect(() => {
     return () => {
-      if (singleTapTimerRef.current) clearTimeout(singleTapTimerRef.current);
       if (animTimer1Ref.current) clearTimeout(animTimer1Ref.current);
       if (animTimer2Ref.current) clearTimeout(animTimer2Ref.current);
       if (animTimer3Ref.current) clearTimeout(animTimer3Ref.current);
@@ -190,19 +204,17 @@ export default function MobileGemSheet({
   const distanceText =
     gem.distanceKm !== undefined ? formatDistance(gem.distanceKm) : null;
 
-  // Build 3 thumbnails: primary image + 2 curated category photos
+  // Build thumbnails: primary image + curated category photos
   const alternates =
     CATEGORY_ALTERNATES[gem.category] ?? DEFAULT_ALTERNATES;
   const thumbnails = [gem.image, alternates[0], alternates[1]];
 
-  // Track scroll position for hero region parallax
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollY(e.currentTarget.scrollTop);
   };
 
   // ── Trigger Double-Tap Like & Smooth Heart Animation ──────────────────────
   const triggerDoubleTapLike = (clientX: number, clientY: number) => {
-    // 1. Idempotent like: only like if currently unliked
     if (!gem.isUpvoted) {
       if (onLikeGem) {
         onLikeGem(gem.id);
@@ -211,7 +223,6 @@ export default function MobileGemSheet({
       }
     }
 
-    // 2. Measure destination like counter position
     let destX = clientX;
     let destY = clientY + 160;
     if (likeBtnRef.current) {
@@ -230,7 +241,6 @@ export default function MobileGemSheet({
       return;
     }
 
-    // 3. Orchestrate smooth, playful heart animation (no box shadow, no thick stroke)
     if (animTimer1Ref.current) clearTimeout(animTimer1Ref.current);
     if (animTimer2Ref.current) clearTimeout(animTimer2Ref.current);
     if (animTimer3Ref.current) clearTimeout(animTimer3Ref.current);
@@ -245,26 +255,23 @@ export default function MobileGemSheet({
       step: "pop",
     });
 
-    // Step 2: Travel towards destination counter after soft scale pop
     animTimer1Ref.current = setTimeout(() => {
       setHeartAnim((prev) =>
         prev?.id === animId ? { ...prev, step: "travel" } : prev
       );
-    }, 320);
+    }, 300);
 
-    // Step 3: Land at counter with bounce
     animTimer2Ref.current = setTimeout(() => {
       setHeartAnim(null);
       setIsLikeBouncing(true);
-    }, 740);
+    }, 700);
 
-    // Step 4: Settle counter bounce
     animTimer3Ref.current = setTimeout(() => {
       setIsLikeBouncing(false);
-    }, 980);
+    }, 940);
   };
 
-  // ── Hero Pointer Gesture (Single Tap vs Double Tap vs Scroll) ─────────────
+  // ── Hero Pointer Gesture (Double Tap to Like) ─────────────────────────────
   const handleHeroPointerDown = (e: React.PointerEvent) => {
     if (!e.isPrimary) return;
     pointerDownRef.current = {
@@ -282,7 +289,6 @@ export default function MobileGemSheet({
     const duration = Date.now() - pointerDownRef.current.time;
     pointerDownRef.current = null;
 
-    // Ignore if finger moved > 12px or held > 450ms (drag/scroll or long press)
     if (dist > 12 || duration > 450) {
       return;
     }
@@ -295,23 +301,10 @@ export default function MobileGemSheet({
     );
 
     if (timeSinceLastTap < 300 && tapDist < 50) {
-      // Double tap detected -> Like gem and play smooth heart animation
-      if (singleTapTimerRef.current) {
-        clearTimeout(singleTapTimerRef.current);
-        singleTapTimerRef.current = null;
-      }
       lastTapRef.current = { time: 0, x: 0, y: 0 };
       triggerDoubleTapLike(e.clientX, e.clientY);
     } else {
-      // First tap -> Queue single tap overlay toggle
       lastTapRef.current = { time: now, x: e.clientX, y: e.clientY };
-      if (singleTapTimerRef.current) {
-        clearTimeout(singleTapTimerRef.current);
-      }
-      singleTapTimerRef.current = setTimeout(() => {
-        setIsOverlayVisible((prev) => !prev);
-        singleTapTimerRef.current = null;
-      }, 280);
     }
   };
 
@@ -327,6 +320,10 @@ export default function MobileGemSheet({
       <Drawer.Root
         open={isOpen}
         onOpenChange={(open) => !open && onClose()}
+        snapPoints={["480px", 1]}
+        activeSnapPoint={activeSnapPoint}
+        setActiveSnapPoint={setActiveSnapPoint}
+        fadeFromIndex={0}
         shouldScaleBackground={false}
         noBodyStyles={true}
         disablePreventScroll={true}
@@ -334,13 +331,13 @@ export default function MobileGemSheet({
       >
         <Drawer.Portal>
           {/* Backdrop with smooth blur and fade */}
-          <Drawer.Overlay className="fixed inset-0 bg-black/65 backdrop-blur-[2px] z-[998] md:hidden transition-opacity" />
+          <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[998] md:hidden transition-opacity" />
 
           {/* 
-            Smooth rounded mobile panel:
+            Mobile bottom sheet:
             - rounded-t-[32px] permanent rounded top corners
-            - overflow-hidden clips hero image and background
-            - h-[94dvh] native mobile height
+            - overflow-hidden clips hero image directly under rounded corners (NO brown header bar!)
+            - snapPoints: 480px peek state, drag up to expand to 100%, drag down to close
           */}
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-[999] md:hidden
@@ -368,7 +365,7 @@ export default function MobileGemSheet({
                 50% { transform: translateY(4px); opacity: 1; }
               }
               .anim-heart-pop-smooth {
-                animation: mobileHeartPopSmooth 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation: mobileHeartPopSmooth 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
               .anim-counter-bounce {
                 animation: mobileCounterBounce 240ms ease-out forwards;
@@ -389,17 +386,20 @@ export default function MobileGemSheet({
               {gem.description}
             </Drawer.Description>
 
-            {/* ── Top Drag Handle for Pull-Down Dismiss ──────────────────────── */}
+            {/* ── Top Drag Handle Floating Directly Over the Photograph ──────── */}
             <div
-              className="relative z-30 shrink-0 flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing w-full"
-              title="Drag down to close"
+              onClick={() =>
+                setActiveSnapPoint((prev) => (prev === "480px" ? 1 : "480px"))
+              }
+              className="absolute top-2.5 inset-x-0 z-40 flex justify-center cursor-grab active:cursor-grabbing pointer-events-auto"
+              title="Drag or tap to expand/collapse"
             >
-              <div className="h-1.5 w-12 rounded-full bg-white/35 hover:bg-white/50 transition-colors" />
+              <div className="h-1.5 w-12 rounded-full bg-white/40 shadow-sm" />
             </div>
 
-            {/* ── Floating Header Navigation Bar ─────────────────────────────── */}
-            <header className="relative z-30 px-4 pt-1 pb-2 flex items-center justify-between pointer-events-none w-full max-w-md mx-auto">
-              {/* Back / Close Circle Button (Always visible) */}
+            {/* ── Floating Header Navigation Icons directly over the Photograph ── */}
+            <header className="absolute top-6 inset-x-0 z-40 px-4 flex items-center justify-between pointer-events-none w-full max-w-md mx-auto">
+              {/* Back / Close Circle Button */}
               <button
                 type="button"
                 onClick={onClose}
@@ -427,7 +427,7 @@ export default function MobileGemSheet({
                   <Maximize2 size={17} />
                 </button>
 
-                {/* Bookmark Button (fades with overlay) */}
+                {/* Bookmark Button */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -439,8 +439,6 @@ export default function MobileGemSheet({
                     gem.isBookmarked
                       ? "bg-[#E8743A] text-[#120B08] ring-[#E8743A]"
                       : "bg-black/55 text-[#F5E6D0] hover:text-[#E8743A]"
-                  } ${
-                    isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"
                   }`}
                 >
                   <Bookmark
@@ -449,14 +447,12 @@ export default function MobileGemSheet({
                   />
                 </button>
 
-                {/* Share Button (fades with overlay) */}
+                {/* Share Button */}
                 <button
                   type="button"
                   onClick={handleShare}
                   aria-label="Share gem"
-                  className={`grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg ${
-                    isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-                  }`}
+                  className="grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg"
                 >
                   <MoreHorizontal size={20} />
                 </button>
@@ -465,7 +461,7 @@ export default function MobileGemSheet({
 
             {/* Copy Toast Notification */}
             {copied && (
-              <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#E8743A] text-[#120B08] text-xs font-bold shadow-2xl flex items-center gap-1.5 animate-in fade-in duration-200">
+              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#E8743A] text-[#120B08] text-xs font-bold shadow-2xl flex items-center gap-1.5 animate-in fade-in duration-200">
                 <Check size={14} className="stroke-[3]" />
                 <span>Link copied to clipboard!</span>
               </div>
@@ -481,7 +477,7 @@ export default function MobileGemSheet({
                   top: heartAnim.step === "travel" ? heartAnim.destY : heartAnim.y,
                   transition:
                     heartAnim.step === "travel"
-                      ? "left 420ms cubic-bezier(0.16, 1, 0.3, 1), top 420ms cubic-bezier(0.16, 1, 0.3, 1), transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 420ms ease-out"
+                      ? "left 400ms cubic-bezier(0.16, 1, 0.3, 1), top 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease-out"
                       : "none",
                   transform:
                     heartAnim.step === "travel"
@@ -517,16 +513,15 @@ export default function MobileGemSheet({
               style={{ WebkitOverflowScrolling: "touch" }}
             >
               {/* 
-                1. Hero Region with Scoped Parallax:
-                - Photo stays inside hero region, moving slightly slower than scroll (translateY).
-                - When user scrolls down, content below slides UP and covers hero naturally.
-                - No fixed photo background behind text content!
+                1. Hero Region (Reaches the absolute top under the curved border!):
+                - Starts at top: 0, NO brown header space!
+                - Photo has scoped parallax translation on scroll.
               */}
               <section
                 onPointerDown={handleHeroPointerDown}
                 onPointerUp={handleHeroPointerUp}
-                className="relative w-full h-[72dvh] min-h-[460px] max-h-[620px] overflow-hidden flex flex-col justify-end cursor-pointer touch-pan-y"
-                aria-label="Gem Hero Photo (Single tap for clean view, double tap to like)"
+                className="relative w-full h-[70dvh] min-h-[460px] max-h-[600px] overflow-hidden flex flex-col justify-end cursor-pointer touch-pan-y"
+                aria-label="Gem Hero Photo (Double tap to like)"
               >
                 {/* Hero Photograph with Scoped Parallax */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -538,23 +533,13 @@ export default function MobileGemSheet({
                       transform: `translateY(${Math.max(0, -scrollY * 0.3)}px)`,
                     }}
                   />
-                  {/* Top gradient for back button contrast */}
-                  <div
-                    className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 via-black/35 to-transparent transition-opacity duration-300 ${
-                      isOverlayVisible ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                  {/* Smooth bottom gradient fading into the solid content surface */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t from-[#120B08] from-15% via-[#120B08]/75 via-45% to-transparent transition-opacity duration-300 ${
-                      isOverlayVisible ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
+                  {/* Top gradient for button contrast */}
+                  <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/80 via-black/35 to-transparent pointer-events-none" />
+                  {/* Smooth bottom gradient fading into solid content surface */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#120B08] from-15% via-[#120B08]/75 via-45% to-transparent pointer-events-none" />
                   {/* Ambient ColorThief tint */}
                   <div
-                    className={`absolute inset-0 transition-opacity duration-300 mix-blend-screen ${
-                      isOverlayVisible ? "opacity-25" : "opacity-0"
-                    }`}
+                    className="absolute inset-0 pointer-events-none opacity-25 mix-blend-screen"
                     style={{
                       background: `radial-gradient(circle at 50% 40%, rgba(${accent}, 0.85), rgba(${accentSoft}, 0.3) 55%, transparent 80%)`,
                     }}
@@ -562,14 +547,8 @@ export default function MobileGemSheet({
                 </div>
 
                 {/* Hero Overlay Content (Strictly Left-Aligned) */}
-                <div
-                  className={`relative z-20 px-5 sm:px-6 pb-6 flex flex-col items-start text-left max-w-md mx-auto w-full transition-all duration-300 ${
-                    isOverlayVisible
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-4 pointer-events-none"
-                  }`}
-                >
-                  {/* Gem Title (Strictly left-aligned) */}
+                <div className="relative z-20 px-5 sm:px-6 pb-6 flex flex-col items-start text-left max-w-md mx-auto w-full">
+                  {/* Gem Title */}
                   <h1
                     style={{
                       color: "#FFFFFF",
@@ -642,8 +621,12 @@ export default function MobileGemSheet({
                     </div>
                   </div>
 
-                  {/* Subtle Scroll Down Indicator */}
-                  <div className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full">
+                  {/* Scroll Down Indicator (Fades out permanently once user scrolls or expands) */}
+                  <div
+                    className={`flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full transition-opacity duration-300 ${
+                      scrollY > 15 || isExpanded ? "opacity-0" : "opacity-100"
+                    }`}
+                  >
                     <span>Scroll for details</span>
                     <ChevronDown size={14} className="stroke-[2.5]" />
                   </div>
@@ -654,15 +637,8 @@ export default function MobileGemSheet({
                 2. Continuous Detail Content Surface:
                 - Sits on solid readable espresso surface bg-[#120B08].
                 - Slides over hero naturally on scroll.
-                - Comfortable editorial spacing (12-16px related, 20-24px groups, 24-32px sections).
               */}
-              <div
-                className={`relative z-10 bg-[#120B08] px-5 sm:px-6 pt-5 pb-32 max-w-md mx-auto w-full space-y-7 transition-opacity duration-300 ${
-                  isOverlayVisible
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none"
-                }`}
-              >
+              <div className="relative z-10 bg-[#120B08] px-5 sm:px-6 pt-5 pb-32 max-w-md mx-auto w-full space-y-7">
                 {/* Section: About (Inline Read more/less) */}
                 <section className="space-y-2 text-left">
                   <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
@@ -682,7 +658,7 @@ export default function MobileGemSheet({
                   </p>
                 </section>
 
-                {/* Section: Photos Gallery (3 Thumbnails) */}
+                {/* Section: Photos Gallery (Horizontally Scrollable Carousel) */}
                 <section className="space-y-3 text-left">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
@@ -702,7 +678,8 @@ export default function MobileGemSheet({
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2.5">
+                  {/* Horizontal Scrollable Thumbnails Carousel */}
+                  <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2 pt-1 -mx-5 px-5 sm:-mx-6 sm:px-6">
                     {thumbnails.map((thumbUrl, idx) => {
                       const isActive = activeImage === thumbUrl;
                       return (
@@ -711,9 +688,9 @@ export default function MobileGemSheet({
                           type="button"
                           onClick={() => setSelectedImage(thumbUrl)}
                           aria-label={`View photo ${idx + 1}`}
-                          className={`relative aspect-[16/11] w-full overflow-hidden rounded-xl border transition-all cursor-pointer group active:scale-95 ${
+                          className={`relative shrink-0 w-36 aspect-[16/11] overflow-hidden rounded-2xl border transition-all cursor-pointer group active:scale-95 snap-start shadow-md ${
                             isActive
-                              ? "border-[#E8743A] ring-2 ring-[#E8743A]/60 shadow-lg"
+                              ? "border-[#E8743A] ring-2 ring-[#E8743A]/60"
                               : "border-white/15 opacity-75 hover:opacity-100"
                           }`}
                         >
@@ -804,14 +781,8 @@ export default function MobileGemSheet({
               </div>
             </div>
 
-            {/* ── 3. Sticky Bottom Action: Get Directions (Hides in clean view) ── */}
-            <footer
-              className={`shrink-0 p-4 bg-gradient-to-t from-[#120B08] via-[#120B08]/95 to-transparent backdrop-blur-md pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t border-white/10 z-40 transition-all duration-300 ${
-                isOverlayVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-12 pointer-events-none"
-              }`}
-            >
+            {/* ── 3. Sticky Bottom Action: Get Directions ────────────────────── */}
+            <footer className="shrink-0 p-4 bg-gradient-to-t from-[#120B08] via-[#120B08]/95 to-transparent backdrop-blur-md pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t border-white/10 z-40">
               <div className="max-w-md mx-auto w-full">
                 <a
                   href={directionsUrl}

@@ -223,11 +223,19 @@ export default function PhotoLightbox({
     touchStartRef.current = null;
   };
 
+  const handleClose = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    onClose();
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`Original photo view of ${title}`}
+      onClick={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[1000] bg-black flex flex-col select-none overflow-hidden touch-none"
       style={{
         transform: dragY > 0 ? `translateY(${dragY}px)` : "none",
@@ -239,7 +247,7 @@ export default function PhotoLightbox({
       <header className="relative z-30 px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close original photo view"
           className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
         >
@@ -260,7 +268,10 @@ export default function PhotoLightbox({
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => handleDoubleTap(window.innerWidth / 2, window.innerHeight / 2)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDoubleTap(window.innerWidth / 2, window.innerHeight / 2);
+            }}
             aria-label={scale > 1 ? "Zoom out" : "Zoom in"}
             className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
           >
@@ -268,7 +279,7 @@ export default function PhotoLightbox({
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
             className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
           >
