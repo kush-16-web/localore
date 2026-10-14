@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Drawer } from "vaul";
 import {
   Bookmark,
   Navigation,
@@ -112,10 +113,6 @@ export default function MobileGemSheet({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
 
-  // Sheet pull-to-dismiss drag state
-  const [sheetDragY, setSheetDragY] = useState(0);
-  const dragTouchStartRef = useRef<{ y: number; time: number } | null>(null);
-
   // References for gesture recognition on hero
   const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(
     null
@@ -143,7 +140,7 @@ export default function MobileGemSheet({
     setIsOverlayVisible(true);
     setIsDescriptionExpanded(false);
     setIsLightboxOpen(false);
-    setSheetDragY(0);
+    setScrollY(0);
   }
 
   const activeImage = selectedImage ?? gem?.image ?? "";
@@ -158,7 +155,7 @@ export default function MobileGemSheet({
     };
   }, []);
 
-  if (!isOpen || !gem) return null;
+  if (!gem) return null;
 
   const directionsUrl = gem.coordinates
     ? `https://www.google.com/maps/dir/?api=1&destination=${gem.coordinates.lat},${gem.coordinates.lng}`
@@ -198,32 +195,7 @@ export default function MobileGemSheet({
     CATEGORY_ALTERNATES[gem.category] ?? DEFAULT_ALTERNATES;
   const thumbnails = [gem.image, alternates[0], alternates[1]];
 
-  // ── Pull-to-Dismiss Gesture Handling ─────────────────────────────────────
-  const handleSheetDragStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    dragTouchStartRef.current = { y: touch.clientY, time: Date.now() };
-  };
-
-  const handleSheetDragMove = (e: React.TouchEvent) => {
-    if (!dragTouchStartRef.current) return;
-    const currentY = e.touches[0].clientY;
-    const dy = currentY - dragTouchStartRef.current.y;
-    // Allow dragging down only
-    if (dy > 0) {
-      setSheetDragY(dy);
-    }
-  };
-
-  const handleSheetDragEnd = () => {
-    if (!dragTouchStartRef.current) return;
-    if (sheetDragY > 110) {
-      onClose();
-    }
-    setSheetDragY(0);
-    dragTouchStartRef.current = null;
-  };
-
-  // Also allow pull-to-dismiss when scrolling up at top of scroll container
+  // Track scroll position for hero region parallax
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollY(e.currentTarget.scrollTop);
   };
@@ -258,7 +230,7 @@ export default function MobileGemSheet({
       return;
     }
 
-    // 3. Orchestrate smooth, playful heart animation (no box shadow)
+    // 3. Orchestrate smooth, playful heart animation (no box shadow, no thick stroke)
     if (animTimer1Ref.current) clearTimeout(animTimer1Ref.current);
     if (animTimer2Ref.current) clearTimeout(animTimer2Ref.current);
     if (animTimer3Ref.current) clearTimeout(animTimer3Ref.current);
@@ -284,12 +256,12 @@ export default function MobileGemSheet({
     animTimer2Ref.current = setTimeout(() => {
       setHeartAnim(null);
       setIsLikeBouncing(true);
-    }, 760);
+    }, 740);
 
     // Step 4: Settle counter bounce
     animTimer3Ref.current = setTimeout(() => {
       setIsLikeBouncing(false);
-    }, 1020);
+    }, 980);
   };
 
   // ── Hero Pointer Gesture (Single Tap vs Double Tap vs Scroll) ─────────────
@@ -343,478 +315,518 @@ export default function MobileGemSheet({
     }
   };
 
+  const DESCRIPTION_LIMIT = 150;
+  const needsTruncation = gem.description.length > DESCRIPTION_LIMIT;
+  const displayedDescription =
+    isDescriptionExpanded || !needsTruncation
+      ? gem.description
+      : `${gem.description.slice(0, DESCRIPTION_LIMIT).trim()}...`;
+
   return (
     <>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={gem.title}
-        className="fixed inset-0 z-[999] md:hidden bg-[#120B08] font-['DM_Sans',sans-serif] flex flex-col overflow-hidden select-none"
-        style={{
-          transform: sheetDragY > 0 ? `translateY(${sheetDragY}px)` : "none",
-          transition: sheetDragY === 0 ? "transform 280ms cubic-bezier(0.16, 1, 0.3, 1)" : "none",
-        }}
+      <Drawer.Root
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+        shouldScaleBackground={false}
+        noBodyStyles={true}
+        disablePreventScroll={true}
+        closeThreshold={0.25}
       >
-        <style>{`
-          @keyframes mobileHeartPopSmooth {
-            0% { transform: translate(-50%, -50%) scale(0) rotate(-6deg); opacity: 0; }
-            45% { transform: translate(-50%, -50%) scale(1.22) rotate(2deg); opacity: 1; }
-            75% { transform: translate(-50%, -50%) scale(0.98) rotate(-1deg); }
-            100% { transform: translate(-50%, -50%) scale(1.05) rotate(0deg); opacity: 1; }
-          }
-          @keyframes mobileCounterBounce {
-            0% { transform: scale(1); }
-            35% { transform: scale(1.35); color: #E8743A; }
-            70% { transform: scale(0.94); }
-            100% { transform: scale(1); }
-          }
-          @keyframes mobileScrollBounce {
-            0%, 100% { transform: translateY(0); opacity: 0.65; }
-            50% { transform: translateY(4px); opacity: 1; }
-          }
-          .anim-heart-pop-smooth {
-            animation: mobileHeartPopSmooth 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
-          .anim-counter-bounce {
-            animation: mobileCounterBounce 240ms ease-out forwards;
-          }
-          .anim-scroll-hint {
-            animation: mobileScrollBounce 2s ease-in-out infinite;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .anim-heart-pop-smooth, .anim-counter-bounce, .anim-scroll-hint {
-              animation: none !important;
-              transition: none !important;
-            }
-          }
-        `}</style>
+        <Drawer.Portal>
+          {/* Backdrop with smooth blur and fade */}
+          <Drawer.Overlay className="fixed inset-0 bg-black/65 backdrop-blur-[2px] z-[998] md:hidden transition-opacity" />
 
-        {/* ── Persistent Fixed Parallax Hero Image Layer ───────────────────── */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-          <img
-            src={activeImage}
-            alt={gem.title}
-            className="h-full w-full object-cover transition-transform duration-75 select-none"
-            style={{
-              transform: `translateY(${Math.min(scrollY * 0.35, 160)}px) scale(1.04)`,
-            }}
-          />
-
-          {/* Gradients: Fully fade out in Clean View so photo is 100% bright & pristine */}
-          {/* Top gradient for button readability */}
-          <div
-            className={`absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/80 via-black/35 to-transparent transition-opacity duration-300 ${
-              isOverlayVisible ? "opacity-100" : "opacity-0"
-            }`}
-          />
-          {/* Bottom dark gradient fading up into content surface */}
-          <div
-            className={`absolute inset-0 bg-gradient-to-t from-[#120B08] from-15% via-[#120B08]/75 via-45% to-transparent transition-opacity duration-300 ${
-              isOverlayVisible ? "opacity-100" : "opacity-0"
-            }`}
-          />
-          {/* Ambient ColorThief tint */}
-          <div
-            className={`absolute inset-0 transition-opacity duration-300 mix-blend-screen ${
-              isOverlayVisible ? "opacity-25" : "opacity-0"
-            }`}
-            style={{
-              background: `radial-gradient(circle at 50% 40%, rgba(${accent}, 0.85), rgba(${accentSoft}, 0.3) 55%, transparent 80%)`,
-            }}
-          />
-        </div>
-
-        {/* ── Top Drag-to-Dismiss Handle ────────────────────────────────────── */}
-        <div
-          onTouchStart={handleSheetDragStart}
-          onTouchMove={handleSheetDragMove}
-          onTouchEnd={handleSheetDragEnd}
-          className="relative z-50 shrink-0 flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing w-full"
-          title="Drag down to close"
-        >
-          <div className="h-1.5 w-12 rounded-full bg-white/35 hover:bg-white/50 transition-colors" />
-        </div>
-
-        {/* ── Floating Header Navigation Bar ───────────────────────────────── */}
-        <header className="relative z-40 px-4 pt-1 pb-2 flex items-center justify-between pointer-events-none">
-          {/* Close / Back Circle Button (Always visible even in clean view) */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Back"
-            className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg"
+          {/* 
+            Smooth rounded mobile panel:
+            - rounded-t-[32px] permanent rounded top corners
+            - overflow-hidden clips hero image and background
+            - h-[94dvh] native mobile height
+          */}
+          <Drawer.Content
+            className="fixed inset-x-0 bottom-0 z-[999] md:hidden
+              h-[94dvh] outline-none rounded-t-[32px] border-t border-white/12
+              shadow-[0_-20px_60px_rgba(0,0,0,0.85)]
+              flex flex-col overflow-hidden
+              bg-[#120B08] font-['DM_Sans',sans-serif] select-none"
+            style={{ left: 0, right: 0, width: "100%", maxWidth: "100vw" }}
           >
-            <ChevronLeft size={22} className="stroke-[2.5]" />
-          </button>
+            <style>{`
+              @keyframes mobileHeartPopSmooth {
+                0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+                50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+                75% { transform: translate(-50%, -50%) scale(0.96); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
+              }
+              @keyframes mobileCounterBounce {
+                0% { transform: scale(1); }
+                35% { transform: scale(1.35); color: #E8743A; }
+                70% { transform: scale(0.94); }
+                100% { transform: scale(1); }
+              }
+              @keyframes mobileScrollBounce {
+                0%, 100% { transform: translateY(0); opacity: 0.65; }
+                50% { transform: translateY(4px); opacity: 1; }
+              }
+              .anim-heart-pop-smooth {
+                animation: mobileHeartPopSmooth 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+              }
+              .anim-counter-bounce {
+                animation: mobileCounterBounce 240ms ease-out forwards;
+              }
+              .anim-scroll-hint {
+                animation: mobileScrollBounce 2s ease-in-out infinite;
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .anim-heart-pop-smooth, .anim-counter-bounce, .anim-scroll-hint {
+                  animation: none !important;
+                  transition: none !important;
+                }
+              }
+            `}</style>
 
-          {/* Right Action Icons: Expand (Lightbox), Bookmark, Share */}
-          <div className="pointer-events-auto flex items-center gap-2">
-            {/* Expand / True Original Lightbox Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                const idx = thumbnails.indexOf(activeImage);
-                setLightboxInitialIndex(idx >= 0 ? idx : 0);
-                setIsLightboxOpen(true);
-              }}
-              aria-label="View original full photo"
-              title="View original uncropped photo"
-              className="grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg"
-            >
-              <Maximize2 size={17} />
-            </button>
+            <Drawer.Title className="sr-only">{gem.title}</Drawer.Title>
+            <Drawer.Description className="sr-only">
+              {gem.description}
+            </Drawer.Description>
 
-            {/* Bookmark Button (fades with overlay) */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onBookmarkToggle?.(gem.id);
-              }}
-              aria-label={gem.isBookmarked ? "Remove from saved" : "Save gem"}
-              className={`grid h-10 w-10 place-items-center rounded-full backdrop-blur-md ring-1 ring-white/20 transition-all cursor-pointer active:scale-90 shadow-lg ${
-                gem.isBookmarked
-                  ? "bg-[#E8743A] text-[#120B08] ring-[#E8743A]"
-                  : "bg-black/55 text-[#F5E6D0] hover:text-[#E8743A]"
-              } ${isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-            >
-              <Bookmark
-                size={18}
-                className={gem.isBookmarked ? "fill-[#120B08]" : ""}
-              />
-            </button>
-
-            {/* Share Button (fades with overlay) */}
-            <button
-              type="button"
-              onClick={handleShare}
-              aria-label="Share gem"
-              className={`grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg ${
-                isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-              }`}
-            >
-              <MoreHorizontal size={20} />
-            </button>
-          </div>
-        </header>
-
-        {/* Copy Toast Notification */}
-        {copied && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#E8743A] text-[#120B08] text-xs font-bold shadow-2xl flex items-center gap-1.5 animate-in fade-in duration-200">
-            <Check size={14} className="stroke-[3]" />
-            <span>Link copied to clipboard!</span>
-          </div>
-        )}
-
-        {/* ── Traveling Double-Tap Heart Animation Layer (Clean, No Box Shadow) ─ */}
-        {heartAnim && (
-          <div
-            key={heartAnim.id}
-            className="pointer-events-none fixed z-50 will-change-transform"
-            style={{
-              left: heartAnim.step === "travel" ? heartAnim.destX : heartAnim.x,
-              top: heartAnim.step === "travel" ? heartAnim.destY : heartAnim.y,
-              transition:
-                heartAnim.step === "travel"
-                  ? "left 440ms cubic-bezier(0.16, 1, 0.3, 1), top 440ms cubic-bezier(0.16, 1, 0.3, 1), transform 440ms cubic-bezier(0.16, 1, 0.3, 1), opacity 440ms ease-out"
-                  : "none",
-              transform:
-                heartAnim.step === "travel"
-                  ? "translate(-50%, -50%) scale(0.35)"
-                  : "translate(-50%, -50%) scale(1)",
-              opacity: heartAnim.step === "travel" ? 0.9 : 1,
-            }}
-          >
-            <div className={heartAnim.step === "pop" ? "anim-heart-pop-smooth" : ""}>
-              <Heart
-                size={heartAnim.step === "travel" ? 36 : 64}
-                className="stroke-white stroke-[2]"
-                style={{
-                  fill: `rgb(${accent})`,
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── Single Continuous Vertical Scroll Surface ─────────────────────── */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto overscroll-y-contain scrollbar-none"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {/* 1. Cinematic Hero Section (Takes ~82% of viewport height) */}
-          <section
-            onPointerDown={handleHeroPointerDown}
-            onPointerUp={handleHeroPointerUp}
-            className="relative w-full h-[82dvh] min-h-[520px] max-h-[820px] overflow-hidden flex flex-col justify-end cursor-pointer touch-pan-y"
-            aria-label="Gem Hero Photo (Single tap for clean view, double tap to like)"
-          >
-            {/* Hero Overlay Content (Strictly Left-Aligned) */}
+            {/* ── Top Drag Handle for Pull-Down Dismiss ──────────────────────── */}
             <div
-              className={`relative z-20 px-5 sm:px-6 pb-6 flex flex-col items-start text-left max-w-md mx-auto w-full transition-all duration-300 ${
-                isOverlayVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4 pointer-events-none"
-              }`}
+              className="relative z-30 shrink-0 flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing w-full"
+              title="Drag down to close"
             >
-              {/* Gem Title (Strictly left-aligned with matching font styling) */}
-              <h1
-                style={{
-                  color: "#FFFFFF",
-                  fontFamily: "'Syne', sans-serif",
-                }}
-                className="text-2xl sm:text-3xl font-bold !text-white leading-tight tracking-tight drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)] text-left w-full"
+              <div className="h-1.5 w-12 rounded-full bg-white/35 hover:bg-white/50 transition-colors" />
+            </div>
+
+            {/* ── Floating Header Navigation Bar ─────────────────────────────── */}
+            <header className="relative z-30 px-4 pt-1 pb-2 flex items-center justify-between pointer-events-none w-full max-w-md mx-auto">
+              {/* Back / Close Circle Button (Always visible) */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Back"
+                className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg"
               >
-                {gem.title}
-              </h1>
+                <ChevronLeft size={22} className="stroke-[2.5]" />
+              </button>
 
-              {/* Tags Row (Category & Area Badges, Left-aligned) */}
-              <div className="flex flex-wrap items-center justify-start gap-2 mt-2.5 w-full">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-medium text-white/95 shadow-md">
-                  <MapPin size={12} className="text-[#E8743A]" />
-                  {gem.category}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-medium text-white/95 shadow-md">
-                  <MapPin size={12} className="text-[#E8743A]" />
-                  {gem.area}
-                </span>
-              </div>
-
-              {/* Stats Row (Heart/Likes, RoadIcon Distance, Hours, Left-aligned) */}
-              <div className="flex items-center justify-start gap-5 text-xs sm:text-sm text-[#F5E6D0] mt-3 pt-0.5 w-full">
-                {/* Like Button */}
+              {/* Right Action Icons: Expand (Lightbox), Bookmark, Share */}
+              <div className="pointer-events-auto flex items-center gap-2">
+                {/* Expand / True Original Lightbox Button */}
                 <button
-                  ref={likeBtnRef}
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onUpvoteToggle?.(gem.id);
-                  }}
-                  aria-label={gem.isUpvoted ? "Unlike gem" : "Like gem"}
-                  className="flex items-center gap-1.5 font-semibold text-[#F5E6D0] hover:text-[#E8743A] cursor-pointer active:scale-95 transition-transform"
-                >
-                  <Heart
-                    size={17}
-                    className={`transition-all duration-200 ${
-                      isLikeBouncing ? "anim-counter-bounce" : ""
-                    } ${
-                      gem.isUpvoted
-                        ? "fill-[#E8743A] text-[#E8743A]"
-                        : "fill-white/20 text-white"
-                    }`}
-                  />
-                  <span
-                    className={`transition-all duration-200 ${
-                      isLikeBouncing ? "anim-counter-bounce" : ""
-                    }`}
-                  >
-                    {gem.upvotes}
-                  </span>
-                </button>
-
-                {/* Distance with RoadIcon */}
-                <div className="flex items-center gap-1.5 font-medium text-white/85">
-                  <RoadIcon className="w-4 h-4 text-[#E8743A] shrink-0" />
-                  <span>
-                    {distanceText ??
-                      (gem.distanceKm !== undefined
-                        ? formatDistance(gem.distanceKm)
-                        : "Nearby")}
-                  </span>
-                </div>
-
-                {/* Hours */}
-                <div className="flex items-center gap-1.5 font-semibold text-[#E8743A]">
-                  <Clock size={15} className="text-[#E8743A]" />
-                  <span>{gem.hours || "Open 24/7"}</span>
-                </div>
-              </div>
-
-              {/* Subtle Scroll Down Indicator */}
-              <div className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full">
-                <span>Scroll for details</span>
-                <ChevronDown size={14} className="stroke-[2.5]" />
-              </div>
-            </div>
-          </section>
-
-          {/* ── 2. Continuous Scroll Detail Content (Slides over hero with parallax) ── */}
-          <div
-            className={`relative z-20 px-5 sm:px-6 pt-3 pb-32 max-w-md mx-auto w-full space-y-6 transition-opacity duration-300 ${
-              isOverlayVisible
-                ? "opacity-100"
-                : "opacity-0 pointer-events-none"
-            }`}
-          >
-            {/* Section: About */}
-            <section className="space-y-2 text-left">
-              <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
-                About
-              </h2>
-              <div className="text-sm leading-relaxed text-[#D8C2B0] font-normal">
-                <p>
-                  {isDescriptionExpanded || gem.description.length <= 160
-                    ? gem.description
-                    : `${gem.description.slice(0, 160)}...`}
-                </p>
-                {gem.description.length > 160 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsDescriptionExpanded((prev) => !prev)}
-                    className="mt-1 text-xs font-bold text-[#E8743A] hover:underline cursor-pointer"
-                  >
-                    {isDescriptionExpanded ? "Read less" : "Read more"}
-                  </button>
-                )}
-              </div>
-            </section>
-
-            {/* Section: Photos Gallery (3 Thumbnails) */}
-            <section className="space-y-2.5 text-left">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
-                  Photos
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => {
                     const idx = thumbnails.indexOf(activeImage);
                     setLightboxInitialIndex(idx >= 0 ? idx : 0);
                     setIsLightboxOpen(true);
                   }}
-                  className="text-[11px] text-[#E8743A] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                  aria-label="View original full photo"
+                  title="View original uncropped photo"
+                  className="grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg"
                 >
-                  <span>View Original</span>
-                  <Maximize2 size={11} />
+                  <Maximize2 size={17} />
+                </button>
+
+                {/* Bookmark Button (fades with overlay) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBookmarkToggle?.(gem.id);
+                  }}
+                  aria-label={gem.isBookmarked ? "Remove from saved" : "Save gem"}
+                  className={`grid h-10 w-10 place-items-center rounded-full backdrop-blur-md ring-1 ring-white/20 transition-all cursor-pointer active:scale-90 shadow-lg ${
+                    gem.isBookmarked
+                      ? "bg-[#E8743A] text-[#120B08] ring-[#E8743A]"
+                      : "bg-black/55 text-[#F5E6D0] hover:text-[#E8743A]"
+                  } ${
+                    isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <Bookmark
+                    size={18}
+                    className={gem.isBookmarked ? "fill-[#120B08]" : ""}
+                  />
+                </button>
+
+                {/* Share Button (fades with overlay) */}
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  aria-label="Share gem"
+                  className={`grid h-10 w-10 place-items-center rounded-full bg-black/55 backdrop-blur-md ring-1 ring-white/20 text-[#F5E6D0] hover:text-white active:scale-90 transition-all cursor-pointer shadow-lg ${
+                    isOverlayVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <MoreHorizontal size={20} />
                 </button>
               </div>
+            </header>
 
-              <div className="grid grid-cols-3 gap-2.5">
-                {thumbnails.map((thumbUrl, idx) => {
-                  const isActive = activeImage === thumbUrl;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedImage(thumbUrl)}
-                      aria-label={`View photo ${idx + 1}`}
-                      className={`relative aspect-[16/11] w-full overflow-hidden rounded-xl border transition-all cursor-pointer group active:scale-95 ${
-                        isActive
-                          ? "border-[#E8743A] ring-2 ring-[#E8743A]/60 shadow-lg"
-                          : "border-white/15 opacity-75 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={thumbUrl}
-                        alt={`Thumbnail ${idx + 1}`}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </button>
-                  );
-                })}
+            {/* Copy Toast Notification */}
+            {copied && (
+              <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-[#E8743A] text-[#120B08] text-xs font-bold shadow-2xl flex items-center gap-1.5 animate-in fade-in duration-200">
+                <Check size={14} className="stroke-[3]" />
+                <span>Link copied to clipboard!</span>
               </div>
-            </section>
+            )}
 
-            {/* Section: Location & Map */}
-            <section className="space-y-2.5 text-left">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
-                  Location & Map
-                </h2>
+            {/* ── Traveling Double-Tap Heart Animation Layer (Clean, No Box Shadow) ─ */}
+            {heartAnim && (
+              <div
+                key={heartAnim.id}
+                className="pointer-events-none fixed z-50 will-change-transform"
+                style={{
+                  left: heartAnim.step === "travel" ? heartAnim.destX : heartAnim.x,
+                  top: heartAnim.step === "travel" ? heartAnim.destY : heartAnim.y,
+                  transition:
+                    heartAnim.step === "travel"
+                      ? "left 420ms cubic-bezier(0.16, 1, 0.3, 1), top 420ms cubic-bezier(0.16, 1, 0.3, 1), transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 420ms ease-out"
+                      : "none",
+                  transform:
+                    heartAnim.step === "travel"
+                      ? "translate(-50%, -50%) scale(0.4)"
+                      : "translate(-50%, -50%) scale(1)",
+                  opacity: heartAnim.step === "travel" ? 0.9 : 1,
+                }}
+              >
+                <div
+                  className={
+                    heartAnim.step === "pop" ? "anim-heart-pop-smooth" : ""
+                  }
+                  style={{
+                    filter: "drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45))",
+                  }}
+                >
+                  <Heart
+                    size={heartAnim.step === "travel" ? 28 : 56}
+                    stroke="none"
+                    style={{
+                      fill: `rgb(${accent})`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ── Single Continuous Vertical Scroll Surface ───────────────────── */}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto overscroll-y-contain scrollbar-none"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
+              {/* 
+                1. Hero Region with Scoped Parallax:
+                - Photo stays inside hero region, moving slightly slower than scroll (translateY).
+                - When user scrolls down, content below slides UP and covers hero naturally.
+                - No fixed photo background behind text content!
+              */}
+              <section
+                onPointerDown={handleHeroPointerDown}
+                onPointerUp={handleHeroPointerUp}
+                className="relative w-full h-[72dvh] min-h-[460px] max-h-[620px] overflow-hidden flex flex-col justify-end cursor-pointer touch-pan-y"
+                aria-label="Gem Hero Photo (Single tap for clean view, double tap to like)"
+              >
+                {/* Hero Photograph with Scoped Parallax */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <img
+                    src={activeImage}
+                    alt={gem.title}
+                    className="h-[120%] w-full object-cover select-none will-change-transform"
+                    style={{
+                      transform: `translateY(${Math.max(0, -scrollY * 0.3)}px)`,
+                    }}
+                  />
+                  {/* Top gradient for back button contrast */}
+                  <div
+                    className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 via-black/35 to-transparent transition-opacity duration-300 ${
+                      isOverlayVisible ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  {/* Smooth bottom gradient fading into the solid content surface */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-[#120B08] from-15% via-[#120B08]/75 via-45% to-transparent transition-opacity duration-300 ${
+                      isOverlayVisible ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  {/* Ambient ColorThief tint */}
+                  <div
+                    className={`absolute inset-0 transition-opacity duration-300 mix-blend-screen ${
+                      isOverlayVisible ? "opacity-25" : "opacity-0"
+                    }`}
+                    style={{
+                      background: `radial-gradient(circle at 50% 40%, rgba(${accent}, 0.85), rgba(${accentSoft}, 0.3) 55%, transparent 80%)`,
+                    }}
+                  />
+                </div>
+
+                {/* Hero Overlay Content (Strictly Left-Aligned) */}
+                <div
+                  className={`relative z-20 px-5 sm:px-6 pb-6 flex flex-col items-start text-left max-w-md mx-auto w-full transition-all duration-300 ${
+                    isOverlayVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-4 pointer-events-none"
+                  }`}
+                >
+                  {/* Gem Title (Strictly left-aligned) */}
+                  <h1
+                    style={{
+                      color: "#FFFFFF",
+                      fontFamily: "'Syne', sans-serif",
+                    }}
+                    className="text-2xl sm:text-3xl font-bold !text-white leading-tight tracking-tight drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)] text-left w-full"
+                  >
+                    {gem.title}
+                  </h1>
+
+                  {/* Tags Row (Category & Area Badges, Left-aligned) */}
+                  <div className="flex flex-wrap items-center justify-start gap-2 mt-2.5 w-full">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-medium text-white/95 shadow-md">
+                      <MapPin size={12} className="text-[#E8743A]" />
+                      {gem.category}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-medium text-white/95 shadow-md">
+                      <MapPin size={12} className="text-[#E8743A]" />
+                      {gem.area}
+                    </span>
+                  </div>
+
+                  {/* Stats Row (Heart/Likes, RoadIcon Distance, Hours, Left-aligned) */}
+                  <div className="flex items-center justify-start gap-5 text-xs sm:text-sm text-[#F5E6D0] mt-3 pt-0.5 w-full">
+                    {/* Like Button */}
+                    <button
+                      ref={likeBtnRef}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpvoteToggle?.(gem.id);
+                      }}
+                      aria-label={gem.isUpvoted ? "Unlike gem" : "Like gem"}
+                      className="flex items-center gap-1.5 font-semibold text-[#F5E6D0] hover:text-[#E8743A] cursor-pointer active:scale-95 transition-transform"
+                    >
+                      <Heart
+                        size={17}
+                        className={`transition-all duration-200 ${
+                          isLikeBouncing ? "anim-counter-bounce" : ""
+                        } ${
+                          gem.isUpvoted
+                            ? "fill-[#E8743A] text-[#E8743A]"
+                            : "fill-white/20 text-white"
+                        }`}
+                      />
+                      <span
+                        className={`transition-all duration-200 ${
+                          isLikeBouncing ? "anim-counter-bounce" : ""
+                        }`}
+                      >
+                        {gem.upvotes}
+                      </span>
+                    </button>
+
+                    {/* Distance with RoadIcon */}
+                    <div className="flex items-center gap-1.5 font-medium text-white/85">
+                      <RoadIcon className="w-4 h-4 text-[#E8743A] shrink-0" />
+                      <span>
+                        {distanceText ??
+                          (gem.distanceKm !== undefined
+                            ? formatDistance(gem.distanceKm)
+                            : "Nearby")}
+                      </span>
+                    </div>
+
+                    {/* Hours */}
+                    <div className="flex items-center gap-1.5 font-semibold text-[#E8743A]">
+                      <Clock size={15} className="text-[#E8743A]" />
+                      <span>{gem.hours || "Open 24/7"}</span>
+                    </div>
+                  </div>
+
+                  {/* Subtle Scroll Down Indicator */}
+                  <div className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full">
+                    <span>Scroll for details</span>
+                    <ChevronDown size={14} className="stroke-[2.5]" />
+                  </div>
+                </div>
+              </section>
+
+              {/* 
+                2. Continuous Detail Content Surface:
+                - Sits on solid readable espresso surface bg-[#120B08].
+                - Slides over hero naturally on scroll.
+                - Comfortable editorial spacing (12-16px related, 20-24px groups, 24-32px sections).
+              */}
+              <div
+                className={`relative z-10 bg-[#120B08] px-5 sm:px-6 pt-5 pb-32 max-w-md mx-auto w-full space-y-7 transition-opacity duration-300 ${
+                  isOverlayVisible
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none"
+                }`}
+              >
+                {/* Section: About (Inline Read more/less) */}
+                <section className="space-y-2 text-left">
+                  <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
+                    About
+                  </h2>
+                  <p className="text-sm leading-relaxed text-[#D8C2B0] font-normal">
+                    {displayedDescription}
+                    {needsTruncation && (
+                      <button
+                        type="button"
+                        onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                        className="inline-block ml-1.5 text-xs font-semibold text-[#E8743A] hover:underline cursor-pointer"
+                      >
+                        {isDescriptionExpanded ? "Read less" : "Read more"}
+                      </button>
+                    )}
+                  </p>
+                </section>
+
+                {/* Section: Photos Gallery (3 Thumbnails) */}
+                <section className="space-y-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
+                      Photos
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const idx = thumbnails.indexOf(activeImage);
+                        setLightboxInitialIndex(idx >= 0 ? idx : 0);
+                        setIsLightboxOpen(true);
+                      }}
+                      className="text-[11px] text-[#E8743A] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                    >
+                      <span>View Original</span>
+                      <Maximize2 size={11} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {thumbnails.map((thumbUrl, idx) => {
+                      const isActive = activeImage === thumbUrl;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedImage(thumbUrl)}
+                          aria-label={`View photo ${idx + 1}`}
+                          className={`relative aspect-[16/11] w-full overflow-hidden rounded-xl border transition-all cursor-pointer group active:scale-95 ${
+                            isActive
+                              ? "border-[#E8743A] ring-2 ring-[#E8743A]/60 shadow-lg"
+                              : "border-white/15 opacity-75 hover:opacity-100"
+                          }`}
+                        >
+                          <img
+                            src={thumbUrl}
+                            alt={`Thumbnail ${idx + 1}`}
+                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* Section: Location & Map */}
+                <section className="space-y-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
+                      Location & Map
+                    </h2>
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[#E8743A] hover:underline flex items-center gap-1 font-semibold no-underline"
+                    >
+                      <span>Open Map</span>
+                      <Navigation size={11} />
+                    </a>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-[#160E0A]/90 overflow-hidden shadow-lg">
+                    <div className="p-3 border-b border-white/10 flex items-center justify-between text-xs text-[#F5E6D0]">
+                      <div className="flex items-center gap-1.5 truncate pr-2">
+                        <MapPin size={13} className="text-[#E8743A] shrink-0" />
+                        <span className="truncate">{gem.area}</span>
+                      </div>
+                      {gem.coordinates && (
+                        <span className="text-[11px] text-[#A68A75] font-mono shrink-0">
+                          {gem.coordinates.lat.toFixed(3)},{" "}
+                          {gem.coordinates.lng.toFixed(3)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-36 w-full">
+                      <iframe
+                        title={`Mini map of ${gem.title}`}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                          gem.coordinates
+                            ? `${gem.coordinates.lat},${gem.coordinates.lng}`
+                            : `${gem.title}, ${gem.area}`
+                        )}&z=15&output=embed`}
+                        className="h-full w-full border-0 pointer-events-none"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Section: Visiting Tips (Only if real data exists) */}
+                {(gem as unknown as { tips?: string }).tips && (
+                  <section className="space-y-2 text-left">
+                    <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
+                      Visiting Tips
+                    </h2>
+                    <p className="text-sm leading-relaxed text-[#D8C2B0]">
+                      {(gem as unknown as { tips: string }).tips}
+                    </p>
+                  </section>
+                )}
+
+                {/* Section: Submitter Community Attribution */}
+                <section className="pt-1 text-left">
+                  <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 backdrop-blur-sm">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#E8743A] text-xs font-bold text-[#120B08] shadow-md">
+                      {gem.authorInitials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[#F5E6D0] truncate">
+                        {gem.author}
+                      </p>
+                      <p className="text-[11px] text-[#A68A75]">
+                        Local Explorer · Submitted this spot
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            {/* ── 3. Sticky Bottom Action: Get Directions (Hides in clean view) ── */}
+            <footer
+              className={`shrink-0 p-4 bg-gradient-to-t from-[#120B08] via-[#120B08]/95 to-transparent backdrop-blur-md pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t border-white/10 z-40 transition-all duration-300 ${
+                isOverlayVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-12 pointer-events-none"
+              }`}
+            >
+              <div className="max-w-md mx-auto w-full">
                 <a
                   href={directionsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-[#E8743A] hover:underline flex items-center gap-1 font-semibold no-underline"
+                  className="w-full py-3.5 px-4 rounded-2xl bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all no-underline shadow-none cursor-pointer"
                 >
-                  <span>Open Map</span>
-                  <Navigation size={11} />
+                  <Navigation size={18} className="fill-[#120B08]" />
+                  <span>Get Directions</span>
                 </a>
               </div>
-
-              <div className="rounded-2xl border border-white/10 bg-[#160E0A]/90 overflow-hidden shadow-lg">
-                <div className="p-3 border-b border-white/10 flex items-center justify-between text-xs text-[#F5E6D0]">
-                  <div className="flex items-center gap-1.5 truncate pr-2">
-                    <MapPin size={13} className="text-[#E8743A] shrink-0" />
-                    <span className="truncate">{gem.area}</span>
-                  </div>
-                  {gem.coordinates && (
-                    <span className="text-[11px] text-[#A68A75] font-mono shrink-0">
-                      {gem.coordinates.lat.toFixed(3)},{" "}
-                      {gem.coordinates.lng.toFixed(3)}
-                    </span>
-                  )}
-                </div>
-                <div className="h-36 w-full">
-                  <iframe
-                    title={`Mini map of ${gem.title}`}
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                      gem.coordinates
-                        ? `${gem.coordinates.lat},${gem.coordinates.lng}`
-                        : `${gem.title}, ${gem.area}`
-                    )}&z=15&output=embed`}
-                    className="h-full w-full border-0 pointer-events-none"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* Section: Visiting Tips (Only if real data exists) */}
-            {(gem as unknown as { tips?: string }).tips && (
-              <section className="space-y-2 text-left">
-                <h2 className="text-xs uppercase font-bold tracking-widest text-[#E8743A]">
-                  Visiting Tips
-                </h2>
-                <p className="text-sm leading-relaxed text-[#D8C2B0]">
-                  {(gem as unknown as { tips: string }).tips}
-                </p>
-              </section>
-            )}
-
-            {/* Section: Submitter Community Attribution */}
-            <section className="pt-2 text-left">
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 backdrop-blur-sm">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#E8743A] text-xs font-bold text-[#120B08] shadow-md">
-                  {gem.authorInitials}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-[#F5E6D0] truncate">
-                    {gem.author}
-                  </p>
-                  <p className="text-[11px] text-[#A68A75]">
-                    Local Explorer · Submitted this spot
-                  </p>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-
-        {/* ── 3. Sticky Bottom Action: Get Directions (Hides in clean view) ── */}
-        <footer
-          className={`shrink-0 p-4 bg-gradient-to-t from-[#120B08] via-[#120B08]/95 to-transparent backdrop-blur-md pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t border-white/10 z-40 transition-all duration-300 ${
-            isOverlayVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-12 pointer-events-none"
-          }`}
-        >
-          <div className="max-w-md mx-auto w-full">
-            <a
-              href={directionsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full py-3.5 px-4 rounded-2xl bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-bold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all no-underline shadow-none cursor-pointer"
-            >
-              <Navigation size={18} className="fill-[#120B08]" />
-              <span>Get Directions</span>
-            </a>
-          </div>
-        </footer>
-      </div>
+            </footer>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* ── Fullscreen Uncropped Photo Lightbox ──────────────────────────────── */}
       <PhotoLightbox

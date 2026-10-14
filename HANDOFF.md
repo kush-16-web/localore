@@ -1,6 +1,5 @@
-# LOCALORE — MOBILE UI POLISH PASS: CINEMATIC GEM DETAILS + SINGLE SCROLL + DOUBLE-TAP LIKE
+# LOCALORE — MOBILE PASS 1.3: CINEMATIC MOTION REPAIR & INTERACTION POLISH
 
-**Commit:** `4effbba`  
 **Date:** October 14, 2026  
 **Status:** Completed & Tested  
 **Next Planned Task:** Desktop Ambient Shell + Cinematic Gem Details
@@ -9,13 +8,13 @@
 
 ## 📋 Summary of Completed Work
 
-In this pass, Localore's mobile Gem Details experience was transformed into a continuous, single-scroll cinematic detail view that completely matches the target visual reference, featuring:
-- **Draggable-to-dismiss sheet:** Pulling down on the top handle smoothly closes the sheet.
-- **Fixed parallax hero photo:** Hero image stays in the background with a parallax depth factor as details slide over it.
-- **Strictly left-aligned typography:** Title, category/area badges, likes, route distance, and hours align on the exact same left grid as the About, Photos, and Map sections.
-- **Clean Single-Tap View:** Fades out all gradients, title, badges, and the sticky Get Directions button completely, revealing 100% pure, unshaded, edge-to-edge photo with only the Back button and Expand icon.
-- **Smooth Double-Tap Heart Like:** Playful ~600ms spring curve animation with clean SVG heart (no dark box/glow shadow).
-- **True Fullscreen Uncropped Lightbox:** Dedicated original photo viewer with black backdrop, `object-contain` (true uncropped aspect ratio), swipe gestures, double-tap zoom (which zooms, not likes), and drag-down-to-dismiss.
+In Pass 1.3, the mobile Gem Details experience was refined to resolve motion and layout regressions:
+- **Smooth Rounded-Panel Opening (Vaul Drawer):** Reintegrated `vaul` drawer container to provide physics-based spring slide-up entrance animation and fluid pull-to-dismiss dragging.
+- **Permanent Rounded Corners:** `rounded-t-[32px]` top corners remain visible and clipped (`overflow-hidden`) across opening, scrolling, dragging, and closing.
+- **Scoped Hero Parallax & Solid Surface:** Parallax is strictly scoped to the hero region (`translateY(${-scrollY * 0.3}px)`). Below the hero, description, gallery, and map render on a solid, readable espresso surface (`bg-[#120B08]`), ensuring the hero photo does not bleed behind content.
+- **Clean Filled Heart Animation:** Replaced the dark, thick-outlined heart with a clean, filled SVG heart in the image's dynamic ColorThief accent color, featuring soft contrast drop-shadow, playful scale-pop, and smooth flight to counter.
+- **Inline Read More / Read Less:** Truncated description renders the toggle inline (`inline-block ml-1.5`) without extra line breaks, expanding smoothly with zero layout jumps.
+- **Clean View & Uncropped Lightbox:** Single-tap clean view hides all gradients, overlays, and the sticky button. Tapping the expand icon opens the dedicated uncropped fullscreen lightbox.
 
 ---
 
