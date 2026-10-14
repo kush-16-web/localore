@@ -43,15 +43,13 @@ export default function CitySelectorModal({
   useEffect(() => {
     const trimmed = searchQuery.trim();
     if (trimmed.length < 2) {
-      const raf = requestAnimationFrame(() => {
-        setSearchResults([]);
-        setIsSearching(false);
-      });
-      return () => cancelAnimationFrame(raf);
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
     }
 
+    setIsSearching(true);
     const timer = setTimeout(async () => {
-      setIsSearching(true);
       try {
         const results = await searchCities(trimmed);
         setSearchResults(results);

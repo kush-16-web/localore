@@ -261,7 +261,7 @@ function MobileGemCard({
 }) {
   return (
     <div
-      className="rounded-2xl bg-[#1C1410] border border-[#332010] overflow-hidden flex flex-col active:scale-[0.98] transition-transform duration-150 cursor-pointer"
+      className="rounded-2xl bg-[#1C1410]/80 backdrop-blur-md border border-[#332010]/80 overflow-hidden flex flex-col active:scale-[0.98] transition-all duration-150 cursor-pointer"
       onClick={onSelect}
     >
       <div className={`relative overflow-hidden bg-[#110C08] ${gem.aspectRatio}`}>
@@ -351,7 +351,7 @@ function DesktopGemCard({
 }) {
   return (
     <div
-      className="rounded-2xl bg-[#1c1011] border border-[#96683d]
+      className="rounded-2xl bg-[#1C120E]/80 backdrop-blur-md border border-[#3D2A18]
         hover:border-[#E8743A]/40 hover:shadow-[0_12px_24px_-10px_rgba(232,116,58,0.15)]
         transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
       onClick={onSelect}
