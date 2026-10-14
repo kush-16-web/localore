@@ -1,4 +1,5 @@
 import { PLACE_CATEGORIES } from "../../types/place";
+import { useAmbientTheme } from "../../context/AmbientThemeContext";
 
 const CATEGORY_ICONS: Record<string, string> = {
   All: "ti-compass",
@@ -19,10 +20,18 @@ export default function ExploreHeader({
   activeTab,
   onTabChange,
 }: ExploreHeaderProps) {
+  const { triggerSurpriseMe, surpriseMeActive } = useAmbientTheme();
+
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-2.5 border-b border-[#261810] bg-[#140C08] shrink-0">
+    <div
+      className="flex items-center justify-between gap-3 px-4 py-2.5 border-b shrink-0 transition-colors duration-500"
+      style={{
+        backgroundColor: "var(--ambient-surface, #140C08)",
+        borderColor: "var(--ambient-border, #261810)",
+      }}
+    >
       {/* Category filter tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none shrink-0 w-full">
+      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none shrink min-w-0">
         {PLACE_CATEGORIES.map((cat) => {
           const isActive = activeTab === cat;
           const icon = CATEGORY_ICONS[cat] || "ti-tag";
@@ -30,22 +39,50 @@ export default function ExploreHeader({
             <button
               key={cat}
               onClick={() => onTabChange(cat)}
+              style={
+                isActive
+                  ? {
+                      borderColor: "var(--ambient-accent, #E8743A)",
+                      color: "var(--ambient-accent, #FF8D54)",
+                      backgroundColor: "var(--ambient-surface-raised, #2D180E)",
+                    }
+                  : undefined
+              }
               className={`
                 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
                 whitespace-nowrap transition-all duration-150 cursor-pointer
                 ${
                   isActive
-                    ? "bg-[#2D180E] text-[#FF8D54] border border-[#E8743A] font-semibold shadow-sm"
+                    ? "border font-semibold shadow-sm"
                     : "bg-[#1A120E] text-[#D8C7B8] border border-[#352317] hover:bg-[#241913] hover:text-white hover:border-[#4D3222]"
                 }
               `}
             >
-              <i className={`ti ${icon} text-[13px] ${isActive ? "text-[#FF8D54]" : "text-[#A89080]"}`} />
+              <i
+                className={`ti ${icon} text-[13px] ${
+                  isActive ? "text-[inherit]" : "text-[#A89080]"
+                }`}
+              />
               {cat}
             </button>
           );
         })}
       </div>
+
+      {/* Surprise Me discovery button */}
+      <button
+        onClick={triggerSurpriseMe}
+        disabled={surpriseMeActive}
+        title="Surprise me with a random hidden gem"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border border-[#E8743A]/40 bg-[#E8743A]/10 text-[#E8743A] hover:bg-[#E8743A]/20 transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+      >
+        <i
+          className={`ti ${
+            surpriseMeActive ? "ti-compass animate-spin" : "ti-sparkles"
+          } text-xs`}
+        />
+        <span className="hidden sm:inline">Surprise Me</span>
+      </button>
     </div>
   );
 }

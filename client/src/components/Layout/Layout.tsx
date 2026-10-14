@@ -4,44 +4,45 @@ import Header from './Header';
 import RightPanel from './RightPanel';
 import BottomNav from './BottomNav';
 import { useGemPanel } from '../../context/GemPanelContext';
-import { useColorThief } from '../../hooks/useColorThief';
-
-const FALLBACK_ACCENT = '232,116,58'; // brand orange #E8743A
+import { useAmbientTheme } from '../../context/AmbientThemeContext';
+import CategoryAtmosphere from '../Atmosphere/CategoryAtmosphere';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { selectedGem, closePanel, toggleUpvote, toggleBookmark } = useGemPanel();
+  const { palette, activeCategory, level } = useAmbientTheme();
 
-  // YT Music-style ambient colour — computed once here for the WHOLE app shell
-  const { rgb } = useColorThief(selectedGem?.image ?? '');
-  const accent = rgb.length === 3 ? rgb.join(',') : FALLBACK_ACCENT;
+  const primaryRgbStr = palette.primaryRgb.join(',');
 
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden bg-[#0D0805]"
-      style={{ '--accent-rgb': accent } as React.CSSProperties}
+      className="flex flex-col h-screen overflow-hidden text-[#F5E6D0] transition-colors duration-500 ease-in-out"
+      style={{
+        backgroundColor: "var(--ambient-bg, #120B08)",
+      }}
     >
-      {/* ── Clean app-wide ambient top glow — no smoky or glossy blob shadows ── */}
+      {/* ── App-wide dynamic atmospheric top tint — clean gradient, no smoky blobs ── */}
       <div
-        key={selectedGem?.id ?? 'none'}
+        key={`ambient-${level}-${activeCategory}-${selectedGem?.id ?? 'none'}`}
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
+        className="pointer-events-none fixed inset-x-0 top-0 h-[45vh] -z-10 transition-all duration-700 ease-in-out opacity-80"
         style={{
-          animation: 'ambientFade 900ms ease',
-          background: `linear-gradient(180deg, rgba(${accent}, 0.12) 0%, rgba(13, 8, 5, 0.95) 45%, #0D0805 100%)`
+          background: `linear-gradient(180deg, rgba(${primaryRgbStr}, 0.22) 0%, transparent 100%)`
         }}
       />
-      <style>{`
-        @keyframes ambientFade {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-      `}</style>
+
+      {/* Category-specific SVG Atmosphere Artwork (Level 2 & Level 3) */}
+      <CategoryAtmosphere category={activeCategory} variant="background" />
 
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        {/* Main content — clean solid dark canvas without smoky or glossy shadows */}
-        <main className="relative flex-1 bg-[#120B08] overflow-hidden flex flex-col">
+        {/* Main content — transitions smoothly with ambient background */}
+        <main
+          className="relative flex-1 overflow-hidden transition-colors duration-500 ease-in-out flex flex-col"
+          style={{
+            backgroundColor: "var(--ambient-bg, #140C08)",
+          }}
+        >
           <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
             {children}
           </div>

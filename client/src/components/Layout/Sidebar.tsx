@@ -73,10 +73,13 @@ export default function Sidebar() {
     <aside
       className="
         w-56 shrink-0 hidden md:flex flex-col h-full
-        bg-[#0D0906]/60 backdrop-blur-xl
-        border-r border-[#332010]
+        backdrop-blur-xl border-r transition-colors duration-500
         font-['DM_Sans',sans-serif]
       "
+      style={{
+        backgroundColor: "var(--ambient-surface, #0D0906)",
+        borderColor: "var(--ambient-border, #332010)",
+      }}
     >
       {/* ── Browse ── */}
       <nav className="px-3 pt-5">

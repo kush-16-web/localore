@@ -111,10 +111,13 @@ export default function Header() {
     <header
       className="
         relative z-[100] h-16 shrink-0 flex items-center justify-between gap-3 px-5
-        bg-[#110C08]/60 backdrop-blur-xl
-        border-b border-[#332010]
+        border-b transition-colors duration-500
         font-['DM_Sans',sans-serif]
       "
+      style={{
+        backgroundColor: "var(--ambient-surface, #110C08)",
+        borderColor: "var(--ambient-border, #332010)",
+      }}
     >
         <div className="flex items-center gap-4 shrink-0">
           <Link to="/" className="flex items-center gap-3 no-underline">

@@ -114,16 +114,26 @@ export default function Explore() {
       />
 
       {/* Discovery banner / Location info bar */}
-      <div className="px-4 py-2 bg-[#160E0A] border-b border-[#261810] flex flex-wrap items-center justify-between gap-2.5 text-xs">
+      <div
+        className="px-4 py-2 border-b flex flex-wrap items-center justify-between gap-2.5 text-xs transition-colors duration-500"
+        style={{
+          backgroundColor: "var(--ambient-surface, #140C08)",
+          borderColor: "var(--ambient-border, #261810)",
+        }}
+      >
         <div className="flex items-center gap-2.5">
           {/* Interactive location selector pill */}
           <button
             type="button"
             onClick={() => setCityModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1A120E] hover:bg-[#251A14] border border-[#382417] hover:border-[#E8743A]/60 text-[#F5E6D0] transition-colors cursor-pointer group shadow-sm"
+            style={{
+              backgroundColor: "var(--ambient-surface-raised, #1C1410)",
+              borderColor: "var(--ambient-border, #382417)",
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-[#F5E6D0] transition-colors cursor-pointer group shadow-sm hover:border-[var(--ambient-accent,#E8743A)]"
             title="Click to search or change city"
           >
-            <i className="ti ti-map-pin text-[#E8743A] text-sm group-hover:scale-110 transition-transform" />
+            <i className="ti ti-map-pin text-[var(--ambient-accent,#E8743A)] text-sm group-hover:scale-110 transition-transform" />
             <span className="font-semibold text-xs tracking-wide">{currentLocation.displayName}</span>
             <i className="ti ti-chevron-down text-[11px] text-[#A89080] group-hover:text-[#F5E6D0] transition-colors" />
           </button>
@@ -138,7 +148,10 @@ export default function Explore() {
             <button
               onClick={() => requestDeviceLocation()}
               disabled={isDetectingLocation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95"
+              style={{
+                backgroundColor: "var(--ambient-accent, #E8743A)",
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[#120B08] font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <i
                 className={`ti ${
@@ -153,10 +166,22 @@ export default function Explore() {
           {isSurat && (
             <button
               onClick={() => setDemoMode(!demoMode)}
+              style={
+                demoMode
+                  ? {
+                      borderColor: "var(--ambient-accent, #E8743A)",
+                      color: "var(--ambient-accent, #FF8D54)",
+                      backgroundColor: "var(--ambient-surface-raised, #2D180E)",
+                    }
+                  : {
+                      backgroundColor: "var(--ambient-surface-raised, #1C1410)",
+                      borderColor: "var(--ambient-border, #382417)",
+                    }
+              }
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all cursor-pointer ${
                 demoMode
-                  ? "bg-[#2D180E] border-[#E8743A]/60 text-[#FF8D54] font-medium"
-                  : "bg-[#1A120E] border-[#382417] text-[#D8C7B8] hover:text-white hover:border-[#4E3020]"
+                  ? "font-medium"
+                  : "text-[#D8C7B8] hover:text-white"
               }`}
             >
               <i className="ti ti-sparkles" />
@@ -169,7 +194,11 @@ export default function Explore() {
             onClick={() => refreshPlaces()}
             disabled={isLoadingPlaces}
             title="Refresh places"
-            className="w-8 h-8 rounded-full bg-[#1A120E] hover:bg-[#251A14] border border-[#382417] text-[#D8C7B8] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
+            style={{
+              backgroundColor: "var(--ambient-surface-raised, #1C1410)",
+              borderColor: "var(--ambient-border, #382417)",
+            }}
+            className="w-8 h-8 rounded-full border text-[#D8C7B8] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
           >
             <i className={`ti ti-refresh ${isLoadingPlaces ? "animate-spin" : ""}`} />
           </button>

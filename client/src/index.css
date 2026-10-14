@@ -29,6 +29,18 @@
 }
 
 :root {
+  /* ── Ambient Theme Engine CSS Custom Properties ────────────────────────── */
+  --ambient-bg: #120B08;
+  --ambient-surface: #1C1410;
+  --ambient-surface-raised: #241913;
+  --ambient-accent: #E8743A;
+  --ambient-accent-muted: rgba(232, 116, 58, 0.15);
+  --ambient-border: #3D2A18;
+  --ambient-glow: rgba(232, 116, 58, 0.18);
+  --ambient-text: #F5E6D0;
+  --ambient-text-muted: #A07050;
+  --ambient-svg-color: rgba(232, 116, 58, 0.08);
+
   --text: #6b6375;
   --text-h: #08060d;
   /* --bg: #fff; */

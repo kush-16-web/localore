@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Drawer } from 'vaul';
 import GemDetails, { GemActions, GemMap, NarrationTeaser } from '../GemCard/GemDetails';
-import { useColorThief } from '../../hooks/useColorThief';
+import { useAmbientTheme } from '../../context/AmbientThemeContext';
+import CategoryAtmosphere from '../Atmosphere/CategoryAtmosphere';
 import type { GemCardData } from '../MasonryGrid';
 
 type RightPanelProps = {
@@ -23,28 +24,35 @@ function useIsMobile() {
   return isMobile;
 }
 
-const FALLBACK_ACCENT = '232,116,58'; // brand orange #E8743A
-
 export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBookmarkToggle }: RightPanelProps) {
   const isMobile = useIsMobile();
+  const { palette } = useAmbientTheme();
 
-  // YT Music-style dynamic colour extracted from the cover image
-  const { rgb, palette } = useColorThief(gem?.image ?? '');
-  const accent = rgb.length === 3 ? rgb.join(',') : FALLBACK_ACCENT;
-  const accentSoft = palette?.[2]?.length === 3 ? palette[2].join(',') : accent;
+  const primaryRgbStr = palette.primaryRgb.join(',');
+  const secondaryRgbStr = palette.secondaryRgb.join(',');
 
   return (
     <>
-      {/* ── Desktop panel — immersive now-playing ─────────────────────── */}
+      {/* ── Desktop panel — Level 3 Immersive Gem Atmosphere ───────────────── */}
       <aside
         className={`relative hidden md:block
           h-full flex-shrink-0
-          transition-all duration-300 ease-in-out overflow-hidden
+          transition-all duration-300 ease-in-out overflow-hidden border-l border-white/10
           ${isOpen ? 'w-[400px] xl:w-[460px]' : 'w-0'}
         `}
+        style={{
+          backgroundColor: 'var(--ambient-surface-raised, #1C1410)',
+        }}
       >
-        {/* Depth tint so content stays readable over the ambient wash */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#120B08]/40 via-[#120B08]/15 to-[#120B08]/70 pointer-events-none" />
+        {/* Subtle Ambient Glow and Category SVG Artwork */}
+        <div
+          className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+          style={{
+            background: `radial-gradient(120% 60% at 50% 0%, rgba(${primaryRgbStr}, 0.28), transparent 70%)`,
+          }}
+        />
+
+        {gem && <CategoryAtmosphere category={gem.category} variant="panel" />}
 
         {/* Floating close */}
         <button
@@ -126,26 +134,23 @@ export default function RightPanel({ gem, onClose, isOpen, onUpvoteToggle, onBoo
 
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-[999] md:hidden
-              h-[92dvh] outline-none rounded-t-3xl border-t border-white/10
-              shadow-[0_-16px_50px_rgba(0,0,0,0.6)]
-              flex flex-col overflow-hidden
-              bg-[#120B08]"
+              h-[92dvh] outline-none rounded-t-3xl border-t border-white/15
+              shadow-[0_-16px_50px_rgba(0,0,0,0.7)]
+              flex flex-col overflow-hidden transition-colors duration-500"
+            style={{
+              backgroundColor: 'var(--ambient-surface-raised, #1C1410)',
+            }}
           >
-            {/* Dynamic gradient background — colours only */}
+            {/* Dynamic ambient wash for mobile drawer */}
             {gem && (
               <>
                 <div
-                  className="absolute inset-x-0 top-0 h-[55%] pointer-events-none"
+                  className="absolute inset-x-0 top-0 h-[60%] pointer-events-none transition-all duration-700"
                   style={{
-                    background: `linear-gradient(to bottom, rgba(${accent},0.45), rgba(${accentSoft},0.15) 55%, transparent)`
+                    background: `linear-gradient(to bottom, rgba(${primaryRgbStr}, 0.38), rgba(${secondaryRgbStr}, 0.12) 60%, transparent)`
                   }}
                 />
-                <div
-                  className="absolute inset-x-0 bottom-0 h-[35%] pointer-events-none"
-                  style={{
-                    background: `linear-gradient(to top, rgba(${accent},0.16), transparent)`
-                  }}
-                />
+                <CategoryAtmosphere category={gem.category} variant="panel" />
               </>
             )}
 
