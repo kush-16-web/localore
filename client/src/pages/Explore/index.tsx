@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import MasonryGrid from "../../components/MasonryGrid";
 import ExploreHeader from "../../components/Layout/ExploreHeader";
+import CitySelectorModal from "../../components/CitySelector/CitySelectorModal";
 import { useGemPanel } from "../../context/GemPanelContext";
 import { useLocationState } from "../../context/LocationContext";
 import type { UnifiedPlace } from "../../types/place";
@@ -55,6 +56,8 @@ export default function Explore() {
     requestDeviceLocation,
     isDetectingLocation,
   } = useLocationState();
+
+  const [cityModalOpen, setCityModalOpen] = useState(false);
 
   const isSurat = currentLocation.city.toLowerCase() === "surat";
   const query = searchQuery.trim().toLowerCase();
@@ -111,13 +114,20 @@ export default function Explore() {
       />
 
       {/* Discovery banner / Location info bar */}
-      <div className="px-4 py-2.5 bg-[#140C08]/35 backdrop-blur-md border-b border-white/5 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[#F5E6D0]">
-            <i className="ti ti-map-pin text-[#E8743A]" />
-            <strong className="font-semibold">{currentLocation.displayName}</strong>
-          </span>
-          <span className="text-[#8B654A] hidden sm:inline">
+      <div className="px-4 py-2 bg-[#160E0A] border-b border-[#261810] flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-2.5">
+          {/* Interactive location selector pill */}
+          <button
+            type="button"
+            onClick={() => setCityModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1A120E] hover:bg-[#251A14] border border-[#382417] hover:border-[#E8743A]/60 text-[#F5E6D0] transition-colors cursor-pointer group shadow-sm"
+            title="Click to search or change city"
+          >
+            <i className="ti ti-map-pin text-[#E8743A] text-sm group-hover:scale-110 transition-transform" />
+            <span className="font-semibold text-xs tracking-wide">{currentLocation.displayName}</span>
+            <i className="ti ti-chevron-down text-[11px] text-[#A89080] group-hover:text-[#F5E6D0] transition-colors" />
+          </button>
+          <span className="text-[#A89080] text-xs hidden sm:inline">
             · {filteredPlaces.length} places found
           </span>
         </div>
@@ -128,7 +138,7 @@ export default function Explore() {
             <button
               onClick={() => requestDeviceLocation()}
               disabled={isDetectingLocation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-semibold text-[11px] shadow-sm transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <i
                 className={`ti ${
@@ -143,10 +153,10 @@ export default function Explore() {
           {isSurat && (
             <button
               onClick={() => setDemoMode(!demoMode)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all cursor-pointer ${
                 demoMode
-                  ? "bg-[#2A180E] border-[#E8743A]/40 text-[#E8743A]"
-                  : "bg-transparent border-[#3D2A18] text-[#8B654A] hover:text-[#C8A888]"
+                  ? "bg-[#2D180E] border-[#E8743A]/60 text-[#FF8D54] font-medium"
+                  : "bg-[#1A120E] border-[#382417] text-[#D8C7B8] hover:text-white hover:border-[#4E3020]"
               }`}
             >
               <i className="ti ti-sparkles" />
@@ -159,7 +169,7 @@ export default function Explore() {
             onClick={() => refreshPlaces()}
             disabled={isLoadingPlaces}
             title="Refresh places"
-            className="w-7 h-7 rounded-full bg-[#1C1410] hover:bg-[#261A14] border border-[#3D2A18] text-[#A07050] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-full bg-[#1A120E] hover:bg-[#251A14] border border-[#382417] text-[#D8C7B8] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
           >
             <i className={`ti ti-refresh ${isLoadingPlaces ? "animate-spin" : ""}`} />
           </button>
@@ -217,6 +227,11 @@ export default function Explore() {
           />
         )}
       </div>
+
+      <CitySelectorModal
+        isOpen={cityModalOpen}
+        onClose={() => setCityModalOpen(false)}
+      />
     </div>
   );
 }
