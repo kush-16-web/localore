@@ -1,5 +1,8 @@
 # LOCALORE — PASS 1.0 HANDOFF: WORLDWIDE LOCATION-FIRST DISCOVERY
 
+**Commit:** `e9dfbde8ae066ac966342dd1ea9a53843ded95f9`  
+**Date:** October 14, 2026
+
 ## 📋 Summary of Completed Work
 
 In Pass 1.0, Localore was transformed from a Surat-only mock prototype into a functional, worldwide location-aware discovery platform while strictly preserving the visual identity, dark brown/orange aesthetic, layout, and component architecture.
