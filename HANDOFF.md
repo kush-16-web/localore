@@ -1,5 +1,5 @@
-# LOCALORE — MOBILE PASS 1.6: TWO-STAGE SEQUENTIAL SNAP-POINT DRAGGING
-## Half-Screen Peek Opening, Sequential Drag Snapping & Deliberate Dismissal
+# LOCALORE — PASS 1.7: COMPACT ADAPTIVE DISCOVERY TOOLBAR
+## Dynamic Location Formatting, Unified Near Me Pill & Natural Feed Scroll
 
 **Date:** October 15, 2026  
 **Status:** Completed & Tested  
@@ -8,6 +8,20 @@
 ---
 
 ## 📋 Summary of Completed Work
+
+In Pass 1.7, the header crowding issue on mobile was resolved by consolidating three stacked header bars into a clean, adaptive two-row discovery toolbar:
+1. **Compact Discovery Toolbar (1:1 Reference Match):**
+   - **Row 1**: Dynamic location pin and title (e.g. `Surat, Gujarat`, `Tokyo, Japan`, `London, England`, or live GPS location) with clean `Change location ∨` trigger. **Zero hardcoded fallback values**.
+   - **Right Side**: Prominent rounded orange `[ 🎯 Near me ]` action pill (triggers device GPS location, with green pulsing indicator when active).
+   - **Row 2**: Sleek horizontal scrolling category pills with concise labels: `All`, `Cafés`, `Nature`, `Viewpoints`, `Culture`, `Historic`, `Attractions`.
+2. **Adaptive Natural Feed Scroll:**
+   - Moved the discovery toolbar **inside the scrollable feed container** directly above the gem grid.
+   - At scroll position 0 (top), it sits seamlessly below the sticky logo and search bar.
+   - As the user scrolls down into the gem feed, the toolbar naturally scrolls away with the cards, reclaiming ~120px of permanent screen real estate for photo exploration.
+   - Scrolling back to the top brings it naturally back into view without any jarring direction-reversal pop-in/pop-out.
+3. **De-emphasized Demo Mode:**
+   - Removed the prominent orange `Demo Mode: ON/OFF` button from the primary consumer interface.
+   - Replaced it with a quiet, low-contrast `demo on/off` toggle next to "Change location", keeping it accessible to developers and testers without cluttering the public discovery experience.
 
 In Pass 1.6, the mobile Gem Details bottom sheet interaction was upgraded to the standard two-stage bottom-sheet experience:
 1. **Half-Screen Peek Initial Opening (`0.55`):**

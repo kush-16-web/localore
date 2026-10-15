@@ -105,84 +105,20 @@ export default function Explore() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden font-['DM_Sans',sans-serif]">
-      {/* Category filter tabs */}
-      <ExploreHeader
-        activeTab={activeCategory}
-        onTabChange={setActiveCategory}
-      />
-
-      {/* Discovery banner / Location info bar */}
-      <div className="px-4 py-2.5 bg-[#140C08]/35 backdrop-blur-md border-b border-white/5 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-        <div className="flex items-center gap-2">
-          {/* Interactive location selector pill */}
-          <button
-            type="button"
-            onClick={openCityModal}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1C1410] hover:bg-[#281A12] border border-[#3D2A18] hover:border-[#E8743A]/60 text-[#F5E6D0] transition-all cursor-pointer group shadow-sm active:scale-95"
-            title="Click to search or change city"
-          >
-            <i className="ti ti-map-pin text-[#E8743A] text-sm group-hover:scale-110 transition-transform shrink-0" />
-            <strong className="font-semibold text-xs tracking-wide max-w-[170px] sm:max-w-[260px] md:max-w-none truncate text-left">
-              {currentLocation.displayName}
-            </strong>
-            {currentLocation.isLiveGps && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live device GPS" />
-            )}
-            <span className="text-[10px] text-[#E8743A] bg-[#2A180E] px-1.5 py-0.5 rounded border border-[#E8743A]/30 shrink-0 font-medium group-hover:bg-[#E8743A] group-hover:text-[#120B08] transition-colors">
-              Change ▾
-            </span>
-          </button>
-          <span className="text-[#8B654A] hidden sm:inline">
-            · {filteredPlaces.length} places found
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Prominent Explore Near Me button if not yet on live GPS */}
-          {!currentLocation.isLiveGps && (
-            <button
-              onClick={() => requestDeviceLocation()}
-              disabled={isDetectingLocation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8743A] hover:bg-[#D4622A] text-[#120B08] font-semibold text-[11px] shadow-sm transition-all cursor-pointer active:scale-95"
-            >
-              <i
-                className={`ti ${
-                  isDetectingLocation ? "ti-loader animate-spin" : "ti-crosshair"
-                }`}
-              />
-              <span>{isDetectingLocation ? "Locating..." : "Explore near me"}</span>
-            </button>
-          )}
-
-          {/* Surat Demo Mode toggle if in Surat */}
-          {isSurat && (
-            <button
-              onClick={() => setDemoMode(!demoMode)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-all cursor-pointer ${
-                demoMode
-                  ? "bg-[#2A180E] border-[#E8743A]/40 text-[#E8743A]"
-                  : "bg-transparent border-[#3D2A18] text-[#8B654A] hover:text-[#C8A888]"
-              }`}
-            >
-              <i className="ti ti-sparkles" />
-              <span>Demo Mode: {demoMode ? "ON" : "OFF"}</span>
-            </button>
-          )}
-
-          {/* Refresh button */}
-          <button
-            onClick={() => refreshPlaces()}
-            disabled={isLoadingPlaces}
-            title="Refresh places"
-            className="w-7 h-7 rounded-full bg-[#1C1410] hover:bg-[#261A14] border border-[#3D2A18] text-[#A07050] hover:text-[#F5E6D0] flex items-center justify-center cursor-pointer transition-colors"
-          >
-            <i className={`ti ti-refresh ${isLoadingPlaces ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* Scrollable grid area */}
+      {/* Scrollable feed area: contains the compact discovery toolbar at the top */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#3D2A18] scrollbar-track-transparent">
+        {/* Compact Adaptive Discovery Toolbar (Scrolls away naturally with the feed) */}
+        <ExploreHeader
+          activeTab={activeCategory}
+          onTabChange={setActiveCategory}
+          currentLocation={currentLocation}
+          isDetectingLocation={isDetectingLocation}
+          onRequestDeviceLocation={requestDeviceLocation}
+          onOpenCityModal={openCityModal}
+          isSurat={isSurat}
+          demoMode={demoMode}
+          onToggleDemoMode={() => setDemoMode(!demoMode)}
+        />
         {/* Error banner if network/provider failed */}
         {placesError && (
           <div className="m-4 p-4 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-amber-200/90 text-xs flex items-center justify-between">
