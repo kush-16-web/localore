@@ -1,13 +1,24 @@
-# LOCALORE — MOBILE PASS 1.5: STRICT REGRESSION HOTFIX
-## Restored Physics Dragging, Simplified Photo Lightbox & Event Isolation
+# LOCALORE — MOBILE PASS 1.6: TWO-STAGE SEQUENTIAL SNAP-POINT DRAGGING
+## Half-Screen Peek Opening, Sequential Drag Snapping & Deliberate Dismissal
 
-**Date:** October 14, 2026  
+**Date:** October 15, 2026  
 **Status:** Completed & Tested  
 **Next Planned Task:** Desktop Ambient Shell + Cinematic Gem Details
 
 ---
 
 ## 📋 Summary of Completed Work
+
+In Pass 1.6, the mobile Gem Details bottom sheet interaction was upgraded to the standard two-stage bottom-sheet experience:
+1. **Half-Screen Peek Initial Opening (`0.55`):**
+   - Tapping any gem card opens the bottom sheet to half height (~55% / 450px) instead of jumping directly to full screen.
+   - Synchronous render state reset prevents stale full-height state, eliminating any initial layout jump or visual flip.
+2. **Smooth Sequential Drag Snapping (`snapPoints={[0.55, 1]}`, `snapToSequentialPoint={true}`):**
+   - From half height, users can drag the sheet up or tap "Scroll for details" / handle to expand to near-fullscreen (`1` / `h-[92dvh]`).
+   - When closing from full height, dragging downward and releasing anywhere midway snaps back to half height (`0.55`) and **never closes abruptly**.
+3. **Deliberate Dismissal Only From Half Height:**
+   - Only a downward drag/swipe from the half-height position dismisses the sheet cleanly back to Explore.
+   - A partial downward drag from half springs back safely without accidental closing.
 
 In Pass 1.5, three specific mobile regressions were resolved with surgical precision:
 1. **Restored Single-Authoritative Vaul Dragging & Fluid Spring-Back:**

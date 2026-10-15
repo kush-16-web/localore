@@ -101,6 +101,10 @@ export default function MobileGemSheet({
   accentSoft,
 }: MobileGemSheetProps) {
   const [prevGemId, setPrevGemId] = useState<string | number | null>(null);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [activeSnapPoint, setActiveSnapPoint] = useState<number | string | null>(
+    0.55
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -151,6 +155,17 @@ export default function MobileGemSheet({
     setIsPointerBlocked(false);
     setScrollY(0);
     setHasScrolled(false);
+    setActiveSnapPoint(0.55);
+  }
+
+  // Synchronize state when sheet opens or reopens
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setActiveSnapPoint(0.55);
+      setScrollY(0);
+      setHasScrolled(false);
+    }
   }
 
   const activeImage = selectedImage ?? gem?.image ?? "";
@@ -320,13 +335,21 @@ export default function MobileGemSheet({
         open={isOpen}
         onOpenChange={(open) => {
           if (isLightboxOpen) return;
-          if (!open) onClose();
+          if (!open) {
+            setActiveSnapPoint(0.55);
+            onClose();
+          }
         }}
+        snapPoints={[0.55, 1]}
+        activeSnapPoint={activeSnapPoint}
+        setActiveSnapPoint={setActiveSnapPoint}
+        fadeFromIndex={0}
+        snapToSequentialPoint={true}
         shouldScaleBackground={false}
         noBodyStyles={true}
         disablePreventScroll={true}
         dismissible={true}
-        closeThreshold={0.3}
+        closeThreshold={0.25}
       >
         <Drawer.Portal>
           {/* Backdrop with smooth blur and fade */}
@@ -623,12 +646,16 @@ export default function MobileGemSheet({
                     </div>
                   </div>
 
-                  {/* Scroll Down Indicator (Unmounted completely once user scrolls) */}
-                  {!hasScrolled && scrollY < 5 && (
-                    <div className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint pointer-events-none w-full">
+                  {/* Scroll Down Indicator (Unmounted completely once user scrolls or expands to full) */}
+                  {!hasScrolled && scrollY < 5 && activeSnapPoint !== 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSnapPoint(1)}
+                      className="flex items-center justify-center gap-1.5 pt-4 text-[11px] font-medium tracking-wide text-white/50 anim-scroll-hint cursor-pointer hover:text-white/80 transition-colors w-full"
+                    >
                       <span>Scroll for details</span>
                       <ChevronDown size={14} className="stroke-[2.5]" />
-                    </div>
+                    </button>
                   )}
                 </div>
               </section>
